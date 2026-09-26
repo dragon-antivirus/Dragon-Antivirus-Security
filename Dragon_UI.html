@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Antivirus</title>
+<style>
+:root{
+  --brand:#1a6bff;
+  --brand-hi:#4d8dff;
+  --brand-soft:#eaf1ff;
+  --blue:#1a6bff;   --blue-soft:#eaf1ff;
+  --green:#1fab6b;  --green-soft:#e6f7ef;
+  --purple:#8b5cf6; --purple-soft:#f1ebff;
+  --cyan:#06b6d4;   --cyan-soft:#e1f7fb;
+  --amber:#f59e0b;  --amber-soft:#fff3df;
+  --red:#e53935;    --red-soft:#fdeaea;
+  --line:#e6e9ef;
+  --line-soft:#eef1f5;
+  --text:#1c2330;
+  --text-2:#4a5568;
+  --sub:#8a93a3;
+  --danger:#e5484d;
+  --danger-soft:#fdecec;
+  --safe:#18a558;
+  --safe-soft:#e8f6ee;
+  --warn:#d9881a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{width:100%;height:100%;overflow:hidden}
+body{
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+  background:#f2f3f5;color:var(--text);
+  display:flex;flex-direction:column;
+  user-select:none;-webkit-user-select:none;
+  font-size:14px;
+  width:100%;height:100vh;min-height:100vh;overflow:hidden;
+}
+svg{display:block}
+
+/* ============ 标题栏 ============ */
+.titlebar{
+  height:44px;flex-shrink:0;
+  background:#fbfbfc;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 8px 0 16px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600;color:#222}
+.brand svg{width:21px;height:21px;color:var(--brand)}
+.brand-ico{width:21px;height:21px;object-fit:contain;display:block}
+.tb-right{display:flex;align-items:center;gap:2px}
+.tb-btn{
+  width:38px;height:30px;border:none;background:transparent;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;
+}
+.tb-btn svg{width:16px;height:16px}
+.tb-btn:hover{background:#e9ebef}
+.tb-close:hover{background:#e81123;color:#fff}
+.tb-divider{width:1px;height:18px;background:var(--line);margin:0 4px}
+
+/* ============ 右上角下拉菜单 ============ */
+.menu{
+  position:fixed;top:48px;right:10px;width:152px;z-index:60;
+  background:#fff;border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.13);padding:6px;
+  display:none;
+}
+.menu.open{display:block}
+.mi{display:flex;align-items:center;gap:9px;padding:8px 10px;font-size:13px;color:#333;border-radius:6px;cursor:pointer}
+.mi:hover{background:#f5f6f8}
+.mi svg{width:15px;height:15px;color:#888}
+.mi-sep{height:1px;background:var(--line);margin:5px 4px}
+
+/* ============ 主体 ============ */
+.main{flex:1;display:flex;min-height:0}
+.sidebar{
+  width:68px;flex-shrink:0;background:#f7f8fa;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:8px;
+}
+.snav{
+  position:relative;width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6b7280;
+  transition:background .12s,color .12s;
+}
+.snav svg{width:22px;height:22px}
+.snav:hover{background:#e9ebef;color:#333}
+.snav.active{background:var(--brand-soft);color:var(--brand)}
+.snav.active::before{
+  content:'';position:absolute;left:-12px;top:10px;bottom:10px;
+  width:3px;border-radius:3px;background:var(--brand);
+}
+.sidebar .spacer{flex:1}
+
+.pages{flex:1;min-width:0;position:relative;background:#fff}
+.page{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
+.page:not(.active){display:none !important}
+.page.active{display:block}
+.page.active.home{display:flex}
+.page.active.pyas{display:flex}
+
+/* ============ 首页 ============ */
+.home{display:flex;flex-direction:column;gap:18px;padding:26px 40px 32px;overflow-y:auto;position:relative;background:linear-gradient(180deg,#ffffff 0%,#f5f8ff 100%)}
+.home-hero::before{display:none}
+.hero-glow{display:none}
+.hero-main{position:relative;z-index:1;max-width:64%}
+.hero-status{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--blue-soft);color:var(--blue);font-size:13px;font-weight:600;letter-spacing:.5px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--safe);box-shadow:0 0 0 4px rgba(67,160,71,.18)}
+.home-title{margin:16px 0 8px;font-size:28px;font-weight:700;color:#1a1a1a;letter-spacing:.5px}
+.home-sub{margin:0 0 22px;font-size:13.5px;color:var(--sub);line-height:1.6}
+
+.qscan-group{display:inline-flex;align-items:stretch;position:relative}
+.qscan-btn{height:50px;padding:0 40px;border:none;background:linear-gradient(180deg,var(--brand-hi),var(--brand));color:#fff;font-size:15px;font-weight:600;letter-spacing:1px;cursor:pointer;font-family:inherit;border-radius:12px 0 0 12px;box-shadow:0 6px 16px rgba(26,107,255,.22)}
+.qscan-btn:hover{filter:brightness(1.06)}
+.qscan-caret{width:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand));border-left:1px solid rgba(255,255,255,.35);border-radius:0 12px 12px 0;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.16)}
+.qscan-caret:hover{filter:brightness(1.06)}
+.qscan-menu{display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:210px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.12);z-index:40}
+.qscan-menu.open{display:block}
+.qscan-menu div{padding:12px 18px;font-size:14px;color:#333;cursor:pointer;letter-spacing:1px}
+.qscan-menu div:hover{background:var(--brand-soft);color:var(--brand)}
+.qscan-menu div+div{border-top:1px solid var(--line)}
+
+
+.home-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.hf-item{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 10px;background:#fff;border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.hf-item:hover{transform:translateY(-2px);border-color:#dbe4f3;box-shadow:0 6px 16px rgba(16,24,40,.08)}
+.hf-icon{width:50px;height:50px;border-radius:14px;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;color:var(--brand);transition:transform .2s}
+.hf-icon svg{width:24px;height:24px}
+.hf-item:hover .hf-icon{transform:scale(1.06)}
+.hf-item span{font-size:13.5px;color:#555}
+.hf-item:hover span{color:var(--brand)}
+/* 首页功能卡片：统一品牌色，专业克制 */
+.home-actions .hf-item .hf-icon{background:var(--brand-soft);color:var(--brand)}
+.home-actions .hf-item:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(26,107,255,.12)}
+.home-actions .hf-item:hover .hf-icon{color:var(--brand)}
+.home-actions .hf-item:hover span{color:var(--brand)}
+
+.scan-result{margin-top:4px;width:100%;border-radius:12px;border:1px solid;padding:12px 16px;display:none;align-items:center;gap:14px}
+.scan-result.show{display:flex}
+.scan-result.safe{border-color:#cdeccd;background:#f4fbf4}
+.scan-result.bad{border-color:#f6c9c9;background:#fdf4f4}
+.sr-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sr-icon svg{width:20px;height:20px}
+.safe .sr-icon{background:#e2f3e2;color:var(--safe)}
+.bad .sr-icon{background:#fbe0e0;color:var(--danger)}
+.sr-info{flex:1;font-size:12.5px;color:#444;line-height:1.7;min-width:0}
+.sr-info b{color:#1a1a1a}
+.sr-close{border:none;background:transparent;color:#aaa;font-size:18px;cursor:pointer;padding:2px 8px;line-height:1}
+.sr-close:hover{color:#333}
+
+/* ============ 首页：PYAS 风格增强（自写，未引用任何第三方素材） ============ */
+.home-top-widget{display:flex;align-items:stretch;gap:18px;width:100%}
+.home-hero{flex:1 1 46%;min-width:0}
+.protect-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:rgba(24,165,88,.12);color:var(--safe);font-size:12.5px;font-weight:600;letter-spacing:.3px}
+.home-hero.at-risk .protect-pill{background:rgba(229,72,77,.12);color:var(--danger)}
+.state-icon{width:88px;height:88px;display:flex;align-items:center;justify-content:center;border-radius:24px;color:#fff;box-shadow:0 12px 28px rgba(26,107,255,.30);background:linear-gradient(180deg,var(--brand-hi),var(--brand))}
+.home-hero.at-risk .state-icon{background:linear-gradient(180deg,var(--danger-hi,var(--danger)),var(--danger));box-shadow:0 12px 28px rgba(229,72,77,.28)}
+.state-icon svg{width:48px;height:48px}
+.quick-actions{flex:1 1 54%;min-width:0;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.qa-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;border:1px solid var(--line);cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.04);transition:background .2s,border-color .2s,box-shadow .2s}
+.qa-item:hover{background:#fafbff;border-color:var(--brand);box-shadow:0 6px 16px rgba(26,107,255,.10)}
+.qa-item .item-info{flex:1;min-width:0}
+.qa-title{font-size:15.5px;font-weight:600;color:#1a1a1a;letter-spacing:.2px}
+.qa-desc{margin-top:3px;font-size:12.5px;color:var(--sub)}
+.qa-arrow{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--sub);flex-shrink:0;transition:color .2s,background .2s}
+.qa-arrow svg{width:18px;height:18px}
+.qa-item:hover .qa-arrow{color:var(--brand);background:var(--brand-soft)}
+.qa-item.primary{background:linear-gradient(180deg,var(--brand-hi),var(--brand));border-color:transparent;box-shadow:0 8px 20px rgba(26,107,255,.22)}
+.qa-item.primary .qa-title,.qa-item.primary .qa-desc{color:#fff}
+.qa-item.primary .qa-arrow{color:rgba(255,255,255,.92);background:rgba(255,255,255,.16)}
+.qa-item.primary:hover{filter:brightness(1.05);border-color:transparent}
+.home-feed{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.feed-title{font-size:15px;font-weight:700;color:#1a1a1a;letter-spacing:.3px}
+.feed-title::before{content:'';display:inline-block;width:4px;height:15px;background:var(--brand);border-radius:2px;margin-right:9px;vertical-align:-2px}
+.feed-link{font-size:12.5px;color:var(--brand);cursor:pointer;user-select:none}
+.feed-link:hover{text-decoration:underline}
+.feed-body{height:380px;min-height:380px;overflow-y:auto;font-size:12.5px;line-height:1.5;color:#444}
+.feed-row{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #f3f4f6}
+.feed-row:last-child{border-bottom:none}
+.feed-time{color:var(--sub);flex:0 0 auto;font-variant-numeric:tabular-nums}
+.feed-text{flex:1;min-width:0;color:#444}
+.feed-row.danger .feed-text{color:var(--danger)}
+.feed-empty{color:var(--sub);padding:18px 0;text-align:center}
+@media (max-width:780px){
+  .home-top-widget{flex-direction:column}
+  .home-metrics{grid-template-columns:repeat(2,1fr)}
+  .hg-switches{grid-template-columns:repeat(2,1fr)}
+  .home-actions{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ============ 页面通用 ============ */
+.pyas{padding:26px 36px;display:flex;flex-direction:column;min-height:0}
+.page-title{font-size:23px;font-weight:600;color:#1a1a1a}
+.page-desc{margin-top:6px;font-size:13px;color:var(--sub)}
+
+/* ============ 病毒扫描页 ============ */
+.scan-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.scan-head-left{display:flex;align-items:flex-start;gap:14px}
+.scan-back{
+  display:flex;align-items:center;gap:5px;margin-top:2px;padding:5px 10px;
+  border:none;background:transparent;color:var(--brand);font-size:13px;font-weight:600;
+  cursor:pointer;border-radius:8px;flex-shrink:0;
+}
+.scan-back svg{transform:rotate(90deg)}
+.scan-back:hover{background:var(--brand-soft)}
+.select{position:relative}
+.select-btn{
+  display:flex;align-items:center;gap:16px;padding:9px 14px;
+  border:1px solid #d8dbe0;border-radius:8px;background:#fff;
+  font-size:13.5px;color:#333;cursor:pointer;min-width:148px;justify-content:space-between;
+}
+.select-btn .caret{color:#888;font-size:9px;transition:transform .15s}
+.select.open .caret{transform:rotate(180deg)}
+.select-list{
+  position:absolute;top:calc(100% + 6px);right:0;left:0;z-index:30;
+  background:#fff;border:1px solid #d8dbe0;border-radius:8px;
+  box-shadow:0 8px 22px rgba(0,0,0,.12);padding:6px;display:none;
+}
+.select.open .select-list{display:block}
+.select-list li{list-style:none;padding:8px 12px;font-size:13px;color:#333;border-radius:6px;cursor:pointer}
+.select-list li:hover{background:#f5f6f8}
+.select-list li.active{color:var(--brand);background:var(--brand-soft);font-weight:600}
+.scan-action{margin-top:20px;display:flex;align-items:center;gap:14px}
+.scan-btn{
+  display:flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:none;
+  border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;letter-spacing:2px;cursor:pointer;
+}
+.scan-btn svg{width:16px;height:16px}
+.scan-btn:hover{filter:brightness(1.06)}
+.scan-btn:disabled{opacity:.6;cursor:default}
+.scan-hint{font-size:12px;color:var(--sub)}
+.scan-table{
+  margin-top:22px;flex:1;min-height:0;
+  border:1px solid #eceef1;border-radius:10px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.st-head{display:flex;background:#f7f8fa;border-bottom:1px solid #eceef1;font-size:12.5px;color:#666;font-weight:600}
+.st-head .c1{width:130px;padding:10px 18px}
+.st-head .c2{flex:1;padding:10px 18px}
+.st-body{flex:1;overflow:auto}
+.st-empty{padding:46px 0;text-align:center;font-size:13px;color:#b5bac1}
+.st-row{display:flex;font-size:13.5px;color:#333;border-bottom:1px solid #f3f4f6}
+.st-row:last-child{border-bottom:none}
+.st-row .c1{width:130px;padding:11px 18px;color:#444}
+.st-row .c2{flex:1;padding:11px 18px;display:flex;align-items:center;gap:10px}
+.tag{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;flex-shrink:0}
+.tag.safe{color:var(--safe);background:#e7f5e7}
+.tag.bad{color:var(--danger);background:#fdeaea}
+
+/* ============ 功能页 ============ */
+.tools-title{font-size:23px;font-weight:600;margin-bottom:6px}
+.tools-desc{font-size:13px;color:var(--sub);margin-bottom:14px}
+.tool-groups{display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto;padding-right:4px}
+.tool-group{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.tool-group-title{font-size:12px;font-weight:600;color:var(--sub);padding-left:4px}
+.tool-list{border:1px solid #eceef1;border-radius:12px;overflow:hidden;flex:none}
+.tool-item{
+  display:flex;align-items:center;gap:14px;padding:0 22px;height:60px;
+  cursor:pointer;border-bottom:1px solid #f1f2f4;background:#fff;
+}
+.tool-item:last-child{border-bottom:none}
+.tool-item:hover{background:#fafbfc}
+.tool-icon{width:36px;height:36px;border-radius:9px;background:#f5f6f8;color:#5b6470;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tool-icon svg{width:18px;height:18px}
+.tool-item:hover .tool-icon{color:var(--brand);background:var(--brand-soft)}
+.tool-body{flex:1;min-width:0}
+.tool-name{font-size:14.5px;color:#1a1a1a;font-weight:600}
+.tool-desc{margin-top:3px;font-size:12px;color:var(--sub)}
+.tool-arrow{color:#c3c8cf;font-size:18px;flex-shrink:0}
+.tool-item:hover .tool-arrow{color:var(--brand)}
+
+/* ============ 防护页 / 设置页 ============ */
+.sw-list{border:1px solid #eceef1;border-radius:12px;overflow-y:auto;flex:1;min-height:0;margin-top:18px}
+.sw-item{display:flex;align-items:center;padding:0 28px;height:76px;border-bottom:1px solid #f1f2f4;background:#fff}
+.sw-item:last-child{border-bottom:none}
+.driver-fail-bar{display:none;align-items:center;gap:12px;margin-top:auto;margin-left:-36px;margin-right:-36px;margin-bottom:-26px;padding:14px 36px;background:#fff7ed;border-top:1px solid #fed7aa}
+.driver-fail-bar .dfb-icon{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#f97316;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+.driver-fail-bar .dfb-text{flex:1 1 auto;min-width:0}
+.driver-fail-bar .dfb-title{font-size:14px;font-weight:600;color:#9a3412}
+.driver-fail-bar .dfb-msg{font-size:12px;line-height:1.6;color:#7c2d12;margin-top:2px;word-break:break-word}
+.driver-fail-bar .dfb-btn{flex:0 0 auto;padding:8px 20px;border:none;border-radius:8px;background:#f97316;color:#fff;font-size:13px;cursor:pointer}
+.driver-fail-bar .dfb-btn:disabled{opacity:.6;cursor:default}
+.sw-body{flex:1;min-width:0}
+.sw-name{font-size:15.5px;font-weight:600;color:#1a1a1a}
+.sw-desc{margin-top:4px;font-size:12.5px;color:var(--sub)}
+.switch{width:44px;height:24px;border-radius:12px;background:#d5d9df;position:relative;cursor:pointer;transition:background .18s;flex-shrink:0}
+.switch .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .18s}
+.switch.on{background:var(--blue)}
+.switch.on .knob{left:22px}
+
+/* ============ 主动防御：防护等级 ============ */
+.guard-level{display:flex;align-items:center;gap:14px;margin-top:18px}
+.guard-level-label{font-size:15px;font-weight:600;color:#1a1a1a}
+.guard-level .select{min-width:240px}
+
+/* ============ 关于弹窗 ============ */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-mask.open{display:flex}
+.modal{width:360px;background:#fff;border-radius:14px;padding:28px 28px 24px;text-align:center;box-shadow:0 14px 44px rgba(0,0,0,.2)}
+.modal .m-logo{width:58px;height:58px;margin:0 auto 14px;color:var(--brand)}
+.m-logo-img{width:58px;height:58px;margin:0 auto 14px;border-radius:14px;object-fit:cover;display:block}
+.m-name{font-size:19px;font-weight:700;color:#1a1a1a}
+.m-version{margin-top:4px;font-size:12px;color:#888}
+.m-meta{margin-top:18px;background:#f7f8fa;border-radius:10px;padding:12px 18px;text-align:left;font-size:12.5px;color:#555;line-height:2.1}
+.m-meta b{color:#333;font-weight:600}
+.m-close{margin-top:18px;width:100%;padding:10px;border:1px solid #d8dbe0;border-radius:8px;background:#fff;font-size:13.5px;color:#333;cursor:pointer}
+.m-close:hover{background:#f5f6f8}
+
+/* ============ Toast ============ */
+.toast-box{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:rgba(30,32,36,.92);color:#fff;font-size:13px;padding:9px 20px;border-radius:8px;
+  opacity:0;transition:opacity .25s,transform .25s;z-index:200;pointer-events:none;
+}
+.toast-box.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ 选择列表框（表头全选 + 行复选框） ============ */
+.sel-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sel-search{
+  flex:1;display:flex;align-items:center;gap:8px;border:1px solid #d8dbe0;border-radius:8px;
+  padding:8px 12px;max-width:300px;background:#fff;
+}
+.sel-search svg{width:15px;height:15px;color:#999;flex-shrink:0}
+.sel-search input{border:none;outline:none;font-size:13px;flex:1;font-family:inherit;color:#333;background:transparent}
+.select{position:relative}
+.select-btn{
+  display:flex;align-items:center;gap:14px;padding:9px 14px;
+  border:1px solid #d8dbe0;border-radius:8px;background:#fff;
+  font-size:13.5px;color:#333;cursor:pointer;min-width:128px;justify-content:space-between;
+}
+.select-btn .caret{color:#888;font-size:9px;transition:transform .15s}
+.select.open .caret{transform:rotate(180deg)}
+.select-list{
+  position:absolute;top:calc(100% + 6px);right:0;left:0;z-index:30;
+  background:#fff;border:1px solid #d8dbe0;border-radius:8px;
+  box-shadow:0 8px 22px rgba(0,0,0,.12);padding:6px;display:none;
+}
+.select.open .select-list{display:block}
+.select-list li{list-style:none;padding:8px 12px;font-size:13px;color:#333;border-radius:6px;cursor:pointer;white-space:nowrap}
+.select-list li:hover{background:#f5f6f8}
+.select-list li.active{color:var(--brand);background:var(--brand-soft);font-weight:600}
+
+.sel-stat{font-size:13px;color:#444;margin-top:16px}
+.sel-stat b{color:var(--danger);font-weight:600}
+
+.seltable{
+  margin-top:14px;flex:1;min-height:0;
+  border:1px solid #eceef1;border-radius:10px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.seltable .t-head{display:flex;background:#f7f8fa;border-bottom:1px solid #eceef1;font-size:12.5px;color:#666;font-weight:600}
+.seltable .t-head .h-cb{width:46px;padding:10px 0;display:flex;justify-content:center;align-items:center;flex-shrink:0}
+.seltable .t-head .h-col{flex:1;padding:10px 16px;display:flex;align-items:center;gap:6px}
+.seltable .t-head .h-col .sort{color:#b5bac1;font-size:10px}
+.seltable .t-body{flex:1;overflow:auto;min-height:0}
+.t-row{display:flex;align-items:center;font-size:13.5px;color:#333;border-bottom:1px solid #f3f4f6;background:#fff}
+.t-row:last-child{border-bottom:none}
+.t-row:hover{background:#fafbfc}
+.t-row .r-cb{width:46px;padding:12px 0;display:flex;justify-content:center;flex-shrink:0}
+.t-row .r-col{flex:1;padding:12px 16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-row .r-col.bold{font-weight:600;color:#1a1a1a}
+.t-row .r-detect{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;font-weight:600;letter-spacing:.3px;color:var(--danger)}
+.t-row .r-detect.safe{color:var(--safe)}
+.t-row .r-path{color:#444}
+.t-empty{padding:46px 0;text-align:center;font-size:13px;color:#b5bac1}
+
+.cb{
+  width:16px;height:16px;border:1.5px solid #c2c7cf;border-radius:4px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;
+  transition:background .12s,border-color .12s;
+}
+.cb.on{background:var(--brand);border-color:var(--brand)}
+.cb.on::after{content:'';width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+
+.scan-op{display:flex;align-items:center;gap:10px}
+.stop-btn{
+  display:flex;align-items:center;gap:8px;border:1px solid #f0c3c3;border-radius:8px;
+  padding:9px 18px;background:#fff;font-size:13.5px;color:#e53935;cursor:pointer;
+}
+.stop-btn:hover{background:#fdf1f1}
+
+/* ============ 工具子面板 ============ */
+.tool-panel{display:none;flex-direction:column;flex:1;min-height:0}
+.tool-panel.open{display:flex}
+.panel-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.panel-back{
+  display:flex;align-items:center;gap:5px;border:1px solid #d8dbe0;background:#fff;
+  border-radius:8px;padding:6px 12px;font-size:13px;color:#555;cursor:pointer;flex-shrink:0;
+}
+.panel-back:hover{background:#f5f6f8;color:#333}
+.panel-title{font-size:22px;font-weight:600;color:#1a1a1a}
+.panel-desc{margin-top:3px;font-size:12.5px;color:var(--sub)}
+.pn-body{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:14px}
+
+.chk-list{border:1px solid #eceef1;border-radius:10px;overflow-y:auto;flex:1;min-height:0}
+.chk-item{
+  display:flex;align-items:center;gap:12px;padding:12px 18px;
+  border-bottom:1px solid #f1f2f4;background:#fff;
+}
+.chk-item:last-child{border-bottom:none}
+.chk-item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk-item .sub{color:var(--sub);font-size:12px;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk-item .sz{color:var(--sub);font-size:12.5px;min-width:64px;text-align:right;flex-shrink:0}
+.chk-item.done .nm,.chk-item.done .sub{color:#b5bac1;text-decoration:line-through}
+.pn-action{margin-top:14px;display:flex;gap:10px}
+.pn-btn{display:flex;align-items:center;gap:7px;background:var(--brand);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13.5px;font-weight:600;cursor:pointer}
+.pn-btn:hover{filter:brightness(1.06)}
+.pn-btn.ghost{background:#fff;color:#555;border:1px solid #d8dbe0}
+.pn-btn.ghost:hover{background:#f5f6f8}
+.pn-btn:disabled{opacity:.55;cursor:default}
+
+.switch.sm{width:38px;height:21px}
+.switch.sm .knob{width:17px;height:17px}
+.switch.sm.on .knob{left:19px}
+
+.drop-zone{
+  border:2px dashed #d8dbe0;border-radius:12px;padding:26px;text-align:center;
+  color:#8a919c;font-size:13.5px;cursor:pointer;transition:border-color .15s;background:#fbfcfd;
+}
+.drop-zone:hover{border-color:var(--brand);color:var(--brand)}
+.drop-zone.dragover{border-color:var(--brand);background:var(--brand-soft)}
+
+textarea.pn-input{
+  width:100%;min-height:130px;border:1px solid #d8dbe0;border-radius:10px;
+  padding:12px 14px;font-size:13.5px;font-family:inherit;color:#333;resize:vertical;outline:none;background:#fff;
+}
+textarea.pn-input:focus{border-color:var(--brand)}
+
+.lang-list{border:1px solid #eceef1;border-radius:10px;overflow:hidden}
+.lang-item{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #f1f2f4;font-size:14px;color:#333;cursor:pointer;background:#fff}
+.lang-item:last-child{border-bottom:none}
+.lang-item:hover{background:#fafbfc}
+.lang-item.active{color:var(--brand);font-weight:600}
+.lang-item .dot{width:16px;height:16px;border:1.5px solid #c2c7cf;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.lang-item.active .dot{border-color:var(--brand)}
+.lang-item.active .dot::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--brand)}
+
+/* ============ 设置页：语言胶囊 ============ */
+.lang-pills{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.lang-pill{padding:5px 12px;border-radius:14px;font-size:12.5px;color:#555;background:#f2f4f7;cursor:pointer;border:1px solid transparent;transition:all .15s;user-select:none}
+.lang-pill:hover{border-color:#c9d2e0}
+.lang-pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.t-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#d3d7dd;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#b8bec6}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ 首页：专业防护仪表盘 ============ */
+.home-hero{
+  position:relative;isolation:isolate;display:flex;flex-direction:column;gap:18px;
+  border-radius:16px;padding:24px 30px;
+  background:linear-gradient(135deg,#ffffff 0%,var(--brand-soft) 100%);
+  border:1px solid var(--line);
+  box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(26,107,255,.06);
+}
+.home-hero.at-risk{
+  background:linear-gradient(135deg,#ffffff 0%,var(--danger-soft) 100%);
+  border-color:#f3c9c9;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(229,72,77,.08);
+}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  padding:6px 14px;border-radius:999px;background:rgba(24,165,88,.12);color:var(--safe);
+  font-size:12.5px;font-weight:600;letter-spacing:.3px;
+}
+.home-hero.at-risk .hero-pill{background:rgba(229,72,77,.12);color:var(--danger)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.hero-row{display:flex;align-items:center;gap:22px}
+.hero-icon{
+  width:62px;height:62px;border-radius:18px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--brand);color:#fff;box-shadow:0 8px 20px rgba(26,107,255,.28);
+}
+.home-hero.at-risk .hero-icon{background:var(--danger);box-shadow:0 8px 20px rgba(229,72,77,.28)}
+.hero-icon svg{width:32px;height:32px}
+.hero-text{flex:1;min-width:0}
+.home-title{margin:0;font-size:23px;font-weight:700;color:var(--text);letter-spacing:.2px}
+.home-sub{margin:6px 0 16px;font-size:13.5px;color:var(--text-2);line-height:1.6}
+.hero-actions{display:inline-flex;align-items:stretch;position:relative}
+.hero-actions .qscan-btn{height:46px;padding:0 34px;border-radius:10px 0 0 10px;letter-spacing:1px;font-weight:600;font-size:15px}
+.hero-actions .qscan-caret{height:46px;width:42px;border-radius:0 10px 10px 0;font-size:11px}
+.hero-actions .qscan-menu{top:calc(100% + 8px)}
+
+/* 首页指标卡 */
+.home-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.metric{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;
+  background:#fff;border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+.metric-ic{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--brand-soft);color:var(--brand)}
+.metric-ic svg{width:22px;height:22px}
+.metric-num{font-size:18px;font-weight:700;color:var(--text);line-height:1.2}
+.metric-label{font-size:12.5px;color:var(--sub);margin-top:2px}
+
+/* 统一卡片标题风格 */
+.hg-title,.tools-title,.page-title{letter-spacing:.2px}
+
+/* ===== 首页产品化改版（参考专业杀软布局，自写实现，未引用任何第三方素材） ===== */
+.home{padding:24px 36px 30px;background:linear-gradient(180deg,#ffffff 0%,#f4f7fd 100%)}
+.home-hero{align-items:center;text-align:center;padding:34px 30px 30px;
+  background:linear-gradient(135deg,#ffffff 0%, color-mix(in srgb,var(--brand) 8%, #ffffff) 100%);
+  border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(26,107,255,.06)}
+.home-hero.at-risk{background:linear-gradient(135deg,#ffffff 0%, color-mix(in srgb,var(--danger) 9%, #ffffff) 100%);border-color:#f3c9c9;box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(229,72,77,.08)}
+.hero-pill{align-self:center;margin-bottom:18px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.hero-center{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+.hero-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,var(--brand-hi),var(--brand));color:#fff;box-shadow:0 10px 24px rgba(26,107,255,.30)}
+.home-hero.at-risk .hero-icon{background:linear-gradient(180deg,var(--danger-hi,var(--danger)),var(--danger));box-shadow:0 10px 24px rgba(229,72,77,.28)}
+.hero-icon svg{width:38px;height:38px}
+.home-title{margin:0;font-size:26px;font-weight:700;color:var(--text);letter-spacing:.2px}
+.home-sub{margin:0;font-size:13.5px;color:var(--text-2);line-height:1.6;max-width:520px}
+.hero-actions{margin-top:8px;display:inline-flex;align-items:stretch;position:relative}
+.qscan-btn{height:48px;padding:0 30px;border:none;display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg,var(--brand-hi),var(--brand));color:#fff;font-size:15px;font-weight:600;letter-spacing:1px;cursor:pointer;font-family:inherit;border-radius:10px 0 0 10px;box-shadow:0 6px 16px rgba(26,107,255,.22)}
+.qscan-btn:hover{filter:brightness(1.06)}
+.qs-ic{opacity:.95}
+.qscan-caret{width:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;
+  background:linear-gradient(180deg,var(--brand-hi),var(--brand));border-left:1px solid rgba(255,255,255,.35);border-radius:0 10px 10px 0;font-size:11px;box-shadow:0 6px 18px rgba(0,0,0,.16)}
+.qscan-caret:hover{filter:brightness(1.06)}
+.qscan-menu{display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:210px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.12);z-index:40}
+.qscan-menu.open{display:block}
+.qscan-menu div{padding:12px 18px;font-size:14px;color:#333;cursor:pointer;letter-spacing:1px}
+.qscan-menu div:hover{background:var(--brand-soft);color:var(--brand)}
+.qscan-menu div+div{border-top:1px solid var(--line)}
+
+.home-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.metric{display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);transition:border-color .2s,box-shadow .2s}
+.metric:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(26,107,255,.10)}
+.metric-ic{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--brand-soft);color:var(--brand)}
+.metric-ic svg{width:22px;height:22px}
+.metric-num{font-size:19px;font-weight:700;color:var(--text);line-height:1.2}
+.metric-label{font-size:12.5px;color:var(--sub);margin-top:2px}
+.metric-accent{border-color:color-mix(in srgb,var(--brand) 22%, var(--line))}
+.metric-accent .metric-ic{background:linear-gradient(180deg,var(--brand-hi),var(--brand));color:#fff}
+.metric-accent .metric-num{color:var(--brand)}
+
+
+.home-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.hf-item{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 10px;background:#fff;border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.hf-item:hover{transform:translateY(-2px);border-color:var(--brand);box-shadow:0 6px 16px rgba(26,107,255,.12)}
+.hf-icon{width:50px;height:50px;border-radius:14px;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;color:var(--brand);transition:transform .2s}
+.hf-icon svg{width:24px;height:24px}
+.hf-item:hover .hf-icon{transform:scale(1.06)}
+.hf-item span{font-size:13.5px;color:#555}
+.hf-item:hover span{color:var(--brand)}
+/* ============ 首页元素质感对齐 PYAS（克制 / 细腻 / 中性悬停） ============ */
+.qa-item{padding:18px 22px;border-radius:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.qa-item:hover{background:#f5f6f8;border-color:var(--line);box-shadow:0 2px 8px rgba(16,24,40,.06)}
+.qa-title{font-size:16px;font-weight:600;letter-spacing:-.2px;color:var(--text)}
+.qa-desc{margin-top:4px;font-size:13px;color:var(--text-2)}
+.qa-arrow{width:32px;height:32px;border-radius:8px;color:var(--text-2)}
+.qa-item:hover .qa-arrow{color:var(--brand);background:rgba(26,107,255,.08)}
+.qa-item.primary{box-shadow:0 4px 14px rgba(26,107,255,.18)}
+.qa-item.primary:hover{filter:brightness(1.04)}
+.metric{box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.metric:hover{border-color:var(--line);box-shadow:0 2px 8px rgba(16,24,40,.06)}
+.home-feed{box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.hf-item{box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.hf-item:hover{transform:translateY(-2px);border-color:var(--line);box-shadow:0 4px 14px rgba(16,24,40,.08)}
+.hf-item:hover span{color:var(--text)}
+.state-icon{box-shadow:0 8px 20px rgba(26,107,255,.18)}
+.home-hero.at-risk .state-icon{box-shadow:0 8px 20px rgba(229,72,77,.16)}
+/* 首页：左侧盾牌改为 PYAS 风单盾牌（无背景、纯描边） */
+.home-hero .state-icon{width:120px;height:120px;color:var(--brand);background:transparent;border-radius:0;box-shadow:none}
+.home-hero .state-icon svg{width:84px;height:84px}
+.home-hero.at-risk .state-icon{color:var(--danger);background:transparent;box-shadow:none}
+
+/* 首页：第一板块右侧常用功能（2×2） */
+.home-tools{flex:1 1 52%;min-width:0;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-content:center}
+.home-tools .hf-item{padding:18px 12px}
+.home-tools .hf-icon{background:var(--brand-soft);color:var(--brand)}
+
+/* 首页：扫描默认收起 */
+.home-scan{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.scan-toggle{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;cursor:pointer;user-select:none;transition:background .15s}
+.scan-toggle:hover{background:#fafbfc}
+.st-left{display:flex;align-items:center;gap:12px}
+.st-ic{width:32px;height:32px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center}
+.st-ic svg{width:18px;height:18px}
+.st-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.2px}
+.st-sub{font-size:12.5px;color:var(--sub)}
+.st-caret{width:18px;height:18px;color:#9aa0a6;transition:transform .25s}
+.home-scan.collapsed .st-caret{transform:rotate(-90deg)}
+.scan-body{display:flex;flex-direction:column;gap:10px;padding:0 16px 16px}
+.home-scan.collapsed .scan-body{display:none}
+@media (max-width:780px){.home-tools{grid-template-columns:repeat(2,1fr)}.scan-body .qa-item{flex-direction:row}}
+/* ============ 首页：PYAS 质感（最终权威版，压掉历史旧块冲突） ============ */
+/* —— Hero：平铺，右侧裸盾牌（仿 PYAS 单盾牌） —— */
+.home-hero{display:flex !important;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;text-align:left !important;gap:30px;background:transparent !important;border:none !important;box-shadow:none !important;padding:14px 8px 4px !important;border-radius:0 !important}
+.home-hero.at-risk{background:transparent !important;border:none !important;box-shadow:none !important}
+.hero-text{min-width:0;flex:1}
+.home-hero .home-title{margin:0 0 10px !important;font-size:30px;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+.home-hero .home-sub{margin:0 !important;font-size:14px;color:var(--text-2);line-height:1.6}
+.hero-ops{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:24px}
+/* 保护天数胶囊（PYAS 绿） */
+.protect-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:rgba(24,165,88,.10);color:var(--safe);font-size:12.5px;font-weight:700}
+.protect-pill .status-dot{width:7px;height:7px;border-radius:50%;background:var(--safe)}
+/* 智能扫描 + 旁侧下拉框 */
+.scan-group{position:relative;display:inline-flex;align-items:stretch}
+.hero-scan-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 30px;border:1px solid var(--brand);border-right:none;border-radius:11px 0 0 11px;background:var(--brand);color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;user-select:none;transition:filter .15s,transform .15s}
+.hero-scan-btn:hover{filter:brightness(1.06)}
+.hero-scan-btn:active{transform:translateY(1px)}
+.scan-caret{width:42px;border:1px solid var(--brand);border-radius:0 11px 11px 0;background:var(--brand);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:filter .15s}
+.scan-caret svg{width:16px;height:16px}
+.scan-caret:hover{filter:brightness(1.06)}
+.scan-caret.open{filter:brightness(.92)}
+.scan-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:210px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(16,24,40,.16);padding:6px;z-index:30}
+.scan-menu[hidden]{display:none}
+.scan-menu-item{padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:background .12s}
+.scan-menu-item:hover{background:rgb(245,245,247)}
+/* 裸盾牌（仿 PYAS 单盾牌，无背景） */
+.home-hero .state-icon{width:150px;height:150px;flex-shrink:0;background:transparent !important;border-radius:0 !important;box-shadow:none !important;color:var(--brand)}
+.home-hero .state-icon svg{width:104px;height:104px}
+.home-hero.at-risk .state-icon{color:var(--danger) !important;background:transparent !important;box-shadow:none !important}
+/* —— 安全概况（PYAS 白卡） —— */
+.home-overview{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 24px;box-shadow:0 1px 3px rgba(16,24,40,.05);margin-top:8px}
+.ov-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.ov-ic{width:30px;height:30px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center}
+.ov-ic svg{width:17px;height:17px}
+.ov-title{font-size:15.5px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.ov-stat{padding:2px 0 2px 22px;border-left:1px solid var(--line);min-width:0}
+.ov-stat:first-child{padding-left:0;border-left:none}
+.ov-num{font-size:24px;font-weight:800;color:var(--text);letter-spacing:-.3px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-label{font-size:12.5px;color:var(--sub);margin-top:4px}
+.ov-divider{height:1px;background:var(--line);margin:18px 0 16px}
+.ov-utils{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ov-util{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgb(245,245,247);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text);transition:background .15s,box-shadow .15s}
+.ov-util:hover{background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.08)}
+.ov-util-ic{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--brand);border:1px solid var(--line)}
+.ov-util-ic svg{width:16px;height:16px}
+/* —— 实时防护动态（PYAS 风 feed） —— */
+.home-feed{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05);margin-top:8px}
+@media (max-width:900px){
+  .ov-grid{grid-template-columns:repeat(2,1fr)}
+  .ov-stat{padding:8px 0;border-left:none}
+  .ov-utils{grid-template-columns:repeat(2,1fr)}
+  .home-hero .state-icon{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 图标库 ===== -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.4 7 10 4-1.6 7-5.5 7-10V6z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.4 7 10 4-1.6 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-shield-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.4 7 10 4-1.6 7-5.5 7-10V6z"/><path d="m9.5 9.5 5 5m0-5-5 5"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14.5 12l-2-2z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="m9.5 13.5 5 5m0-5-5 5"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 5 12L17 12h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4"/><path d="M12 17.5h.01"/></symbol>
+  <symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3"/><path d="M3 12h18"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1.2 13h9.6L18 7M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="5"/><path d="M12 2.5v7"/><path d="M12 6h-2.5"/></symbol>
+  <symbol id="i-shred" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9.5 11l5 5M14.5 11l-5 5"/></symbol>
+</svg>
+
+<!-- ===== 标题栏 ===== -->
+<div class="titlebar" id="titlebar">
+  <div class="brand">
+    <img class="brand-ico" src="天龙神盾Logo.png" alt=""/>
+    <span id="brandName">天龙神盾</span>
+  </div>
+  <div class="tb-right">
+    <button class="tb-btn" id="btnMenu" title="菜单"><svg><use href="#i-dots"/></svg></button>
+    <div class="tb-divider"></div>
+    <button class="tb-btn" id="btnMin" title="最小化"><svg><use href="#i-min"/></svg></button>
+    <button class="tb-btn tb-close" id="btnClose" title="关闭"><svg><use href="#i-close"/></svg></button>
+  </div>
+</div>
+
+<!-- ===== 右上角菜单 ===== -->
+<div class="menu" id="topMenu">
+  <div class="mi" data-act="rizhi"><svg><use href="#i-log"/></svg>安全日志</div>
+  <div class="mi" data-act="geli"><svg><use href="#i-shield-x"/></svg>隔离区</div>
+  <div class="mi" data-act="xinren"><svg><use href="#i-shield-check"/></svg>信任区</div>
+  <div class="mi" data-act="gengxin"><svg><use href="#i-refresh"/></svg>检查更新</div>
+  <div class="mi" data-act="shezhi"><svg><use href="#i-gear"/></svg>语言设置</div>
+</div>
+
+<!-- ===== 主体 ===== -->
+<div class="main">
+  <nav class="sidebar">
+    <div class="snav active" data-page="home" title="主页"><svg><use href="#i-home"/></svg></div>
+    <div class="snav" data-page="guard" title="主动防御"><svg><use href="#i-shield"/></svg></div>
+    <div class="snav" data-page="tools" title="常用工具"><svg><use href="#i-grid"/></svg></div>
+    <div class="spacer"></div>
+    <div class="snav" data-page="settings" title="设置"><svg><use href="#i-gear"/></svg></div>
+  </nav>
+
+  <div class="pages">
+
+    <!-- ===== 首页（参考 PYAS 首页布局语言，自写实现） ===== -->
+    <div class="page home active" id="page-home">
+      <!-- Hero：防护状态 + 智能扫描（HeySafe 风，自写文案） -->
+      <section class="home-hero" id="homeHero">
+        <div class="hero-text">
+          <h2 class="home-title">天龙神盾正在保护您的电脑</h2>
+          <p class="home-sub">天龙神盾核心检测引擎正在在后台保护您的电脑，威胁在将在落地前被拦截。</p>
+          <div class="hero-ops">
+            <div class="protect-pill"><span class="status-dot"></span><span id="protectDays">已保护 -- 天</span></div>
+            <div class="scan-group">
+              <button class="hero-scan-btn" id="quickScan">智能扫描</button>
+              <button class="scan-caret" id="qscanCaret" title="更多扫描方式"><svg><use href="#i-caret"/></svg></button>
+              <div class="scan-menu" id="qscanMenu" hidden>
+                <div class="scan-menu-item" data-mode="全盘扫描">全盘扫描</div>
+                <div class="scan-menu-item" data-mode="自定义文件">自定义文件</div>
+                <div class="scan-menu-item" data-mode="自定义目录">自定义目录</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="state-icon"><svg><use href="#i-shield-check"/></svg></div>
+      </section>
+
+      <!-- 安全概况（PYAS 白卡：指标 + 常用功能） -->
+      <section class="home-overview">
+        <div class="ov-head"><span class="ov-ic"><svg><use href="#i-shield-check"/></svg></span><span class="ov-title">安全概况</span></div>
+        <div class="ov-grid">
+          <div class="ov-stat"><div class="ov-num" id="mStatus">--</div><div class="ov-label">防护状态</div></div>
+          <div class="ov-stat"><div class="ov-num" id="mDb">--</div><div class="ov-label">病毒库</div></div>
+          <div class="ov-stat"><div class="ov-num" id="mBlocked">0</div><div class="ov-label">今日拦截</div></div>
+          <div class="ov-stat"><div class="ov-num" id="mQuar">0</div><div class="ov-label">已隔离</div></div>
+        </div>
+        <div class="ov-divider"></div>
+        <div class="ov-utils">
+          <div class="ov-util" data-act="gengxin"><span class="ov-util-ic"><svg><use href="#i-refresh"/></svg></span><span>检查更新</span></div>
+          <div class="ov-util" data-act="rizhi"><span class="ov-util-ic"><svg><use href="#i-log"/></svg></span><span>安全日志</span></div>
+          <div class="ov-util" data-act="xinren"><span class="ov-util-ic"><svg><use href="#i-shield-check"/></svg></span><span>信任区</span></div>
+          <div class="ov-util" data-act="geli"><span class="ov-util-ic"><svg><use href="#i-shield-x"/></svg></span><span>隔离区</span></div>
+        </div>
+      </section>
+
+      <!-- 实时防护动态（PYAS 风 feed） -->
+      <section class="home-feed">
+        <div class="feed-head">
+          <div class="feed-title">实时防护日志</div>
+          <div class="feed-link" data-act="rizhi">查看全部日志 ›</div>
+        </div>
+        <div class="feed-body" id="homeFeed"><div class="feed-empty">暂无防护日志</div></div>
+      </section>
+
+      <div class="scan-result" id="scanResult">
+        <div class="sr-icon"><svg><use href="#i-check"/></svg></div>
+        <div class="sr-info"></div>
+        <button class="sr-close" id="srClose">×</button>
+      </div>
+    </div>
+
+    <!-- ===== 病毒扫描页 ===== -->
+    <div class="page pyas" id="page-scan">
+      <div class="scan-head">
+        <div class="scan-head-left">
+          <button class="scan-back" id="scanBack" title="返回"><svg width="14" height="14"><use href="#i-caret"/></svg>返回</button>
+          <div>
+            <div class="page-title" id="scanTitle">病毒扫描</div>
+            <div class="page-desc" id="scanDesc">正在初始化中…</div>
+          </div>
+        </div>
+        <div class="scan-op" id="scanOps">
+          <button class="stop-btn" id="scanStop"><svg width="13" height="13"><use href="#i-close"/></svg>停止</button>
+          <div class="select" id="scanHandle" style="display:none">
+            <button class="select-btn" id="handleBtn">
+              <span id="handleText">处理</span>
+              <svg class="caret" width="10" height="10"><use href="#i-caret"/></svg>
+            </button>
+            <ul class="select-list">
+              <li data-v="删除项目">删除项目</li>
+              <li data-v="忽略项目">忽略项目</li>
+              <li data-v="加入隔离区">加入隔离区</li>
+              <li data-v="加入白名单">加入白名单</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sel-stat" id="scanStat"></div>
+
+      <div class="seltable">
+        <div class="t-head">
+          <div class="h-cb"><span class="cb" id="scanAll"></span></div>
+          <div class="h-col">类型</div>
+          <div class="h-col">路径 <span class="sort">▲</span></div>
+        </div>
+        <div class="t-body" id="scanBody">
+          <div class="t-empty" id="scanEmpty">暂无扫描记录，请选择扫描方式开始扫描</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 常用工具页 ===== -->
+    <div class="page pyas" id="page-tools">
+      <div class="tools-title" id="toolListTitle">常用工具</div>
+      <div class="tools-desc">系统维护工具集，点击进入对应管理</div>
+      <div class="tool-groups" id="toolGroups">
+        <div class="tool-group">
+          <div class="tool-group-title">安全防护组件</div>
+          <div class="tool-list">
+            <div class="tool-item" data-name="隔离区">
+              <div class="tool-icon"><svg><use href="#i-shield-x"/></svg></div>
+              <div class="tool-body">
+                <div class="tool-name">隔离区</div>
+                <div class="tool-desc">查看并管理隔离区文件</div>
+              </div>
+              <span class="tool-arrow">›</span>
+            </div>
+            <div class="tool-item" data-name="信任区">
+              <div class="tool-icon"><svg><use href="#i-shield-check"/></svg></div>
+              <div class="tool-body">
+                <div class="tool-name">信任区</div>
+                <div class="tool-desc">查看并管理信任区文件</div>
+              </div>
+              <span class="tool-arrow">›</span>
+            </div>
+            <div class="tool-item" data-name="安全日志">
+              <div class="tool-icon"><svg><use href="#i-log"/></svg></div>
+              <div class="tool-body">
+                <div class="tool-name">安全日志</div>
+                <div class="tool-desc">查看安全事件的检测与处理记录</div>
+              </div>
+              <span class="tool-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="tool-group-title">小组件</div>
+          <div class="tool-list">
+        <div class="tool-item" data-name="系统清理">
+          <div class="tool-icon"><svg><use href="#i-trash"/></svg></div>
+          <div class="tool-body">
+            <div class="tool-name">系统清理</div>
+            <div class="tool-desc">清理系统垃圾与缓存文件</div>
+          </div>
+          <span class="tool-arrow">›</span>
+        </div>
+        <div class="tool-item" data-name="系统修复">
+          <div class="tool-icon"><svg><use href="#i-wrench"/></svg></div>
+          <div class="tool-body">
+            <div class="tool-name">系统修复</div>
+            <div class="tool-desc">修复系统注册表项目</div>
+          </div>
+          <span class="tool-arrow">›</span>
+        </div>
+        <div class="tool-item" data-name="启动项管理">
+          <div class="tool-icon"><svg><use href="#i-play"/></svg></div>
+          <div class="tool-body">
+            <div class="tool-name">启动项管理</div>
+            <div class="tool-desc">管理开机自启动项目</div>
+          </div>
+          <span class="tool-arrow">›</span>
+        </div>
+        <div class="tool-item" data-name="右键管理">
+          <div class="tool-icon"><svg><use href="#i-mouse"/></svg></div>
+          <div class="tool-body">
+            <div class="tool-name">右键管理</div>
+            <div class="tool-desc">管理右键菜单项目</div>
+          </div>
+          <span class="tool-arrow">›</span>
+        </div>
+        <div class="tool-item" data-name="文件粉碎机">
+          <div class="tool-icon"><svg><use href="#i-shred"/></svg></div>
+          <div class="tool-body">
+            <div class="tool-name">文件粉碎机</div>
+            <div class="tool-desc">彻底粉碎删除文件不可恢复</div>
+          </div>
+          <span class="tool-arrow">›</span>
+        </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：系统清理 ===== -->
+      <div class="tool-panel" id="panel-qingli">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">系统清理</div>
+            <div class="panel-desc">扫描并清理系统垃圾文件，释放磁盘空间</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="chk-list" id="qingliList">
+            <div class="chk-item"><span class="cb on"></span><span class="nm">系统缓存</span><span class="sz">2.3 GB</span></div>
+            <div class="chk-item"><span class="cb on"></span><span class="nm">系统临时文件</span><span class="sz">856 MB</span></div>
+            <div class="chk-item"><span class="cb on"></span><span class="nm">回收站</span><span class="sz">120 MB</span></div>
+            <div class="chk-item"><span class="cb"></span><span class="nm">日志文件</span><span class="sz">45 MB</span></div>
+            <div class="chk-item"><span class="cb"></span><span class="nm">缩略图缓存</span><span class="sz">68 MB</span></div>
+            <div class="chk-item"><span class="cb"></span><span class="nm">浏览器缓存</span><span class="sz">512 MB</span></div>
+          </div>
+          <div class="pn-action">
+            <button class="pn-btn" id="qingliGo">开始清理</button>
+            <button class="pn-btn ghost" id="qingliAll">全选</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：系统修复 ===== -->
+      <div class="tool-panel" id="panel-xiufu">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">系统修复</div>
+            <div class="panel-desc">检查并修复系统异常项目</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="chk-list" id="xiufuList">
+            <div class="chk-item"><span class="cb on"></span><span class="nm">系统文件完整性</span><span class="sz">异常</span></div>
+            <div class="chk-item"><span class="cb on"></span><span class="nm">注册表项</span><span class="sz">异常</span></div>
+            <div class="chk-item"><span class="cb on"></span><span class="nm">网络配置</span><span class="sz">异常</span></div>
+            <div class="chk-item"><span class="cb"></span><span class="nm">系统服务状态</span><span class="sz">正常</span></div>
+            <div class="chk-item"><span class="cb"></span><span class="nm">启动项关联</span><span class="sz">正常</span></div>
+          </div>
+          <div class="pn-action">
+            <button class="pn-btn" id="xiufuGo">立即修复</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：启动项管理 ===== -->
+      <div class="tool-panel" id="panel-qidong">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">启动项管理</div>
+            <div class="panel-desc">管理开机自启动项目，可禁用不必要的启动项</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="chk-list" id="qidongList">
+            <div class="chk-item"><span class="nm">微信<label class="sub">C:\Program Files\WeChat\WeChat.exe</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">QQ<label class="sub">C:\Program Files\Tencent\QQ\Bin\QQScLauncher.exe</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">迅雷下载<label class="sub">C:\Program Files\Thunder\Program\Thunder.exe</label></span><div class="switch sm"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">网易云音乐<label class="sub">C:\Program Files\NetEase\CloudMusic\cloudmusic.exe</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">向日葵远程控制<label class="sub">C:\Program Files\Oray\SunLogin\SunloginClient.exe</label></span><div class="switch sm"><div class="knob"></div></div></div>
+          </div>
+          <div class="pn-action">
+            <button class="pn-btn ghost" id="qidongHint" disabled>共 5 项，已启用 3 项</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：右键管理 ===== -->
+      <div class="tool-panel" id="panel-youjian">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">右键管理</div>
+            <div class="panel-desc">管理右键菜单项目，减少右键菜单冗余</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="chk-list" id="youjianList">
+            <div class="chk-item"><span class="nm">新建文本文档<label class="sub">右键新建菜单</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">发送到<label class="sub">右键发送菜单</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">用记事本打开<label class="sub">文件右键菜单</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">用画图打开<label class="sub">图片右键菜单</label></span><div class="switch sm"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">复制到文件夹…<label class="sub">文件右键菜单</label></span><div class="switch sm on"><div class="knob"></div></div></div>
+            <div class="chk-item"><span class="nm">移动到文件夹…<label class="sub">文件右键菜单</label></span><div class="switch sm"><div class="knob"></div></div></div>
+          </div>
+          <div class="pn-action">
+            <button class="pn-btn ghost" id="youjianHint" disabled>共 6 项，已启用 4 项</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：文件粉碎机 ===== -->
+      <div class="tool-panel" id="panel-fensui">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">文件粉碎机</div>
+            <div class="panel-desc">彻底粉碎删除文件，粉碎后无法恢复</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="drop-zone" id="fensuiDrop">点击选择要粉碎的文件</div>
+          <div class="chk-list" id="fensuiList" style="margin-top:14px"></div>
+          <div class="pn-action">
+            <button class="pn-btn" id="fensuiGo">立即粉碎</button>
+            <button class="pn-btn ghost" id="fensuiClear">清空列表</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：隔离区（选择列表框） ===== -->
+      <div class="tool-panel" id="panel-geli">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">隔离区管理</div>
+            <div class="panel-desc">此选项可以查看并管理隔离区文件</div>
+          </div>
+        </div>
+        <div class="sel-top">
+          <div class="sel-search"><svg><use href="#i-search"/></svg><input id="geliSearch" placeholder="搜索文件..."/></div>
+          <div class="select" id="geliSelect">
+            <button class="select-btn"><span>选择</span><svg class="caret" width="10" height="10"><use href="#i-caret"/></svg></button>
+            <ul class="select-list">
+              <li data-v="新增文件">新增文件</li>
+              <li data-v="新增路径">新增路径</li>
+              <li data-v="恢复">恢复</li>
+              <li data-v="删除">删除</li>
+              <li data-v="恢复并加入白名单">恢复并加入白名单</li>
+            </ul>
+          </div>
+        </div>
+        <div class="seltable">
+          <div class="t-head">
+            <div class="h-cb"><span class="cb" id="geliAll"></span></div>
+            <div class="h-col">日期</div>
+            <div class="h-col">路径 <span class="sort">▲</span></div>
+          </div>
+          <div class="t-body" id="geliBody">
+            <div class="t-empty">隔离区暂无文件</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：信任区 / 白名单（选择列表框） ===== -->
+      <div class="tool-panel" id="panel-xinren">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">白名单管理</div>
+            <div class="panel-desc">此选项可以查看并管理白名单文件</div>
+          </div>
+        </div>
+        <div class="sel-top">
+          <div class="sel-search"><svg><use href="#i-search"/></svg><input id="xinrenSearch" placeholder="搜索文件..."/></div>
+          <div class="select" id="xinrenSelect">
+            <button class="select-btn"><span>选择</span><svg class="caret" width="10" height="10"><use href="#i-caret"/></svg></button>
+            <ul class="select-list">
+              <li data-v="新增文件">新增文件</li>
+              <li data-v="新增路径">新增路径</li>
+              <li data-v="移除项目">移除项目</li>
+            </ul>
+          </div>
+        </div>
+        <div class="seltable">
+          <div class="t-head">
+            <div class="h-cb"><span class="cb" id="xinrenAll"></span></div>
+            <div class="h-col">日期</div>
+            <div class="h-col">路径 <span class="sort">▲</span></div>
+          </div>
+          <div class="t-body" id="xinrenBody">
+            <div class="t-empty">白名单暂无文件</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：安全日志 ===== -->
+      <div class="tool-panel" id="panel-rizhi">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">安全日志</div>
+            <div class="panel-desc">查看安全事件的检测与处理记录</div>
+          </div>
+        </div>
+        <div class="sel-top">
+          <div class="sel-search"><svg><use href="#i-search"/></svg><input id="rizhiSearch" placeholder="搜索日志..."/></div>
+        </div>
+        <div class="seltable">
+          <div class="t-head">
+            <div class="h-col" style="flex:0 0 110px">时间</div>
+            <div class="h-col">事件</div>
+            <div class="h-col" style="flex:0 0 90px">结果</div>
+          </div>
+          <div class="t-body" id="rizhiBody">
+            <div class="t-empty">暂无日志记录</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 工具面板：语言设置 ===== -->
+      <div class="tool-panel" id="panel-yuyan">
+        <div class="panel-head">
+          <button class="panel-back" data-back>‹ 返回</button>
+          <div>
+            <div class="panel-title">语言设置</div>
+            <div class="panel-desc">选择界面显示语言，选择后立即生效</div>
+          </div>
+        </div>
+        <div class="pn-body">
+          <div class="lang-list" id="langList">
+            <div class="lang-item active" data-lang="简体中文"><span class="dot"></span>简体中文</div>
+            <div class="lang-item" data-lang="繁体中文"><span class="dot"></span>繁體中文</div>
+            <div class="lang-item" data-lang="English"><span class="dot"></span>English</div>
+            <div class="lang-item" data-lang="日本語"><span class="dot"></span>日本語</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== 主动防御页：防护等级 + 实时防护 ===== -->
+    <div class="page pyas" id="page-guard">
+      <div class="page-title">主动防御</div>
+      <div class="page-desc">防护等级与实时防护开关，选择等级后开关自动联动</div>
+      <div class="guard-level">
+        <div class="guard-level-label">防护等级</div>
+        <div class="select" id="guardLevel">
+          <button class="select-btn"><span>中</span><svg class="caret" width="10" height="10"><use href="#i-caret"/></svg></button>
+          <ul class="select-list">
+            <li data-v="低">低（仅用户态）</li>
+            <li data-v="中">中（驱动+用户态）</li>
+            <li data-v="高">高（驱动+用户态+引擎扫描）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="sw-list" id="guardSwitches">
+        <div class="sw-item" data-sw="driver">
+          <div class="sw-body">
+            <div class="sw-name">驱动防护</div>
+            <div class="sw-desc">此选项可以使用内核驱动级保护您的电脑</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-sw="userMode">
+          <div class="sw-body">
+            <div class="sw-name">用户态防护</div>
+            <div class="sw-desc">此选项可以在用户态保护您的电脑</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-sw="engineScan">
+          <div class="sw-body">
+            <div class="sw-name">引擎扫描</div>
+            <div class="sw-desc">此选项可以挂起进程后用引擎扫描</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-sw="realtime">
+          <div class="sw-body">
+            <div class="sw-name">文件实时监控</div>
+            <div class="sw-desc">此选项可静态扫描正在被创建/修改的文件与监控压缩包</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-sw="keyPositions">
+          <div class="sw-body">
+            <div class="sw-name">关键位置保护</div>
+            <div class="sw-desc">保护注册表自启项、引导区与自身进程不被篡改</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-sw="staticPoll">
+          <div class="sw-body">
+            <div class="sw-name">静态轮询扫描</div>
+            <div class="sw-desc">周期性扫描下载/桌面等用户目录中的可疑文件</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+      </div>
+      <div class="driver-fail-bar" id="driverFailBar">
+        <div class="dfb-icon">!</div>
+        <div class="dfb-text">
+          <div class="dfb-title">内核驱动未启动</div>
+          <div class="dfb-msg" id="driverFailMsg"></div>
+        </div>
+        <button class="dfb-btn" id="driverFailStart" type="button">启动驱动</button>
+      </div>
+    </div>
+
+    <!-- ===== 设置页 ===== -->
+    <div class="page pyas" id="page-settings">
+      <div class="page-title">设置</div>
+      <div class="page-desc">引擎与运行设置，按需开启相关选项</div>
+      <div class="sw-list">
+        <div class="sw-item" id="settingsLangRow">
+          <div class="sw-body">
+            <div class="sw-name">语言设置</div>
+            <div class="sw-desc">选择界面显示语言，选择后立即生效</div>
+          </div>
+          <div class="lang-pills" id="settingsLangList">
+            <span class="lang-pill" data-lang="简体中文">简体中文</span>
+            <span class="lang-pill" data-lang="繁体中文">繁體中文</span>
+            <span class="lang-pill" data-lang="English">English</span>
+            <span class="lang-pill" data-lang="日本語">日本語</span>
+          </div>
+        </div>
+        <div class="sw-item" id="settingsThemeRow">
+          <div class="sw-body">
+            <div class="sw-name">主题色</div>
+            <div class="sw-desc">选择界面主题色</div>
+          </div>
+          <div class="lang-pills" id="settingsThemeList">
+            <span class="lang-pill" data-theme="blue"><i class="t-dot" style="background:#1a6bff"></i>天空蓝</span>
+            <span class="lang-pill" data-theme="purple"><i class="t-dot" style="background:#8b5cf6"></i>梦幻紫</span>
+            <span class="lang-pill" data-theme="cyan"><i class="t-dot" style="background:#06b6d4"></i>湖光青</span>
+            <span class="lang-pill" data-theme="green"><i class="t-dot" style="background:#1fab6b"></i>清新绿</span>
+            <span class="lang-pill" data-theme="orange"><i class="t-dot" style="background:#ff6a00"></i>活力橙</span>
+          </div>
+        </div>
+        <div class="sw-item" data-setting="enhanced">
+          <div class="sw-body">
+            <div class="sw-name">增强模式</div>
+            <div class="sw-desc">此选项可以增强静态扫描引擎，但是代价是增高误报，通常只在清除顽固病毒是开启</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-setting="cloudEngine">
+          <div class="sw-body">
+            <div class="sw-name">云引擎</div>
+            <div class="sw-desc">本地引擎判定后使用云端接口复核，默认关闭且不会替代本地结果</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+        <div class="sw-item" data-setting="autoStart">
+          <div class="sw-body">
+            <div class="sw-name">开机启动</div>
+            <div class="sw-desc">此选项可以设定开机自动运行，随时保护您的电脑，建议开启</div>
+          </div>
+          <div class="switch on"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== 关于弹窗 ===== -->
+<div class="modal-mask" id="aboutModal">
+  <div class="modal">
+    <img class="m-logo-img" src="天龙神盾Logo.png" alt=""/>
+    <div class="m-name">天龙神盾</div>
+    <div class="m-version" id="aboutVer">版本：1.0.0.0</div>
+    <div class="m-meta">
+      <div><b>引擎：</b>天龙神盾第五代AI智能防护引擎 Dragon AiSmartEngine Gen5 签名 / 哈希模糊匹配 + 宏规则 / YARA规则匹配 / AI深度学习 / CFTQ云查杀引擎，兼顾速度与性能</div>
+      <div><b>病毒库：</b><span id="aboutVirus">暂未更新</span></div>
+      <div><b>已保护：</b><span id="protectDays2">--</span> 天</div>
+    </div>
+    <button class="m-close" id="aboutClose">关闭</button>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast-box" id="toast"></div>
+
+<script>
+/* ================= 后端接口层 ================= */
+function dragonReady() {
+  return !!(window.pywebview && window.pywebview.api);
+}
+
+function dragonApi(method) {
+  const args = Array.prototype.slice.call(arguments, 1);
+  if (!dragonReady() || typeof window.pywebview.api[method] !== 'function') {
+    return Promise.resolve({ error: '后端接口不可用：' + method });
+  }
+  try {
+    const r = window.pywebview.api[method].apply(window.pywebview.api, args);
+    return (r && typeof r.then === 'function') ? r : Promise.resolve(r);
+  } catch (e) {
+    return Promise.resolve({ error: String(e) });
+  }
+}
+
+function dragonErr(r) {
+  return (r && r.error) ? String(r.error) : '';
+}
+
+function loadProductInfo() {
+  dragonApi('dragon_product_info').then(function (pi) {
+    if (!pi || pi.error) return;
+    const ver = pi.version ? translateStr('版本：') + pi.version : null;
+    const db = pi.virusDb ? translateStr('病毒库：') + pi.virusDb : null;
+    if (ver) { const vt=$('#verText'); if(vt)vt.textContent=ver; $('#aboutVer').textContent = ver; }
+    if (db) { const vb=$('#virusText'); if(vb)vb.textContent=db; $('#aboutVirus').textContent = pi.virusDb; }
+    const mdb = $('#mDb'); if (mdb) mdb.textContent = pi.virusDb || '--';
+    applyProtectDays(pi.protectDays || 1);
+    if (pi.theme) applyTheme(pi.theme);
+    loadSettings(pi);
+  });
+}
+
+/* 把已持久化的设置回填到 UI（主题色 / 语言 / 增强模式 / 云引擎 / 开机启动），避免重开设置页时显示成默认 */
+function loadSettings(pi) {
+  if (!pi) return;
+  // 语言胶囊高亮
+  document.querySelectorAll('.lang-pill[data-lang]').forEach(function (p) {
+    p.classList.toggle('active', p.dataset.lang === pi.lang);
+  });
+  // 增强模式 / 云引擎 / 开机启动 开关状态
+  const enh = document.querySelector('#page-settings .sw-item[data-setting="enhanced"] .switch');
+  if (enh) enh.classList.toggle('on', !!pi.enhancedMode);
+  const cloud = document.querySelector('#page-settings .sw-item[data-setting="cloudEngine"] .switch');
+  if (cloud) cloud.classList.toggle('on', !!pi.cloudEngine);
+  const as = document.querySelector('#page-settings .sw-item[data-setting="autoStart"] .switch');
+  if (as) as.classList.toggle('on', !!pi.autoStart);
+}
+
+function loadEngineStatus() {
+  dragonApi('dragon_engine_status').then(function (st) {
+    if (st && st.status && st.status !== 'ready') toast('引擎未就绪：' + (st.detail || ''));
+  });
+}
+
+window.__push__ = function (msg) {
+  try {
+    if (!msg || !msg.channel) return;
+    const d = msg.data || {};
+    if (msg.channel === 'toast') { if (d.message) toast(d.message); return; }
+    if (msg.channel === 'security_log') { appendLogRow(d); appendHomeFeed(d.time, (d.event || '') + ' · ' + (d.result || ''), (d.result === '已隔离' || d.result === '已处理')); return; }
+    if (msg.channel === 'scan_state') { onScanState(d); return; }
+    if (msg.channel === 'scan_stat') { onScanStat(d); return; }
+    if (msg.channel === 'scan_item') { onScanItem(d); return; }
+    if (msg.channel === 'scan_done') { onScanDone(d); return; }
+    if (msg.channel === 'protection') { applyProtection(d); return; }
+    if (msg.channel === 'defense_event') { onDefenseEvent(d); if (d && d.kind === 'blocked') appendHomeFeed(nowTime(), '主动防御拦截：' + esc(d.detail || d.title || ''), true); return; }
+    if (msg.channel === 'product') { loadProductInfo(); return; }
+    if (msg.channel === 'theme') { if (d.name) applyTheme(d.name); return; }
+    if (msg.channel === 'driver_status') { onDriverStatus(d); return; }
+    if (msg.channel === 'driver_failed') { onDriverFailed(d); return; }
+  } catch (e) {}
+};
+
+window.addEventListener('pywebviewready', function () {
+  dragonBootstrap();
+});
+
+/* 屏幕中央 fatal 弹窗：确认→退出，取消→继续 */
+window.__dragonFatalChoice__ = null;
+window.__dragonFatal__ = function (message) {
+  try {
+    if (document.getElementById('dragon-fatal-mask')) {
+      document.getElementById('dragon-fatal-text').textContent = message || '';
+      return;
+    }
+    window.__dragonFatalChoice__ = null;
+    const mask = document.createElement('div');
+    mask.id = 'dragon-fatal-mask';
+    mask.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(15,23,42,.45);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:420px;max-width:86vw;background:#fff;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:22px 24px;font-family:inherit;';
+    const title = document.createElement('div');
+    title.textContent = '加载失败';
+    title.style.cssText = 'font-size:16px;font-weight:700;color:#1f2937;margin-bottom:10px;';
+    const text = document.createElement('div');
+    text.id = 'dragon-fatal-text';
+    text.textContent = message || '';
+    text.style.cssText = 'font-size:13px;line-height:1.7;color:#4b5563;margin-bottom:20px;word-break:break-all;';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;';
+    const btnOk = document.createElement('button');
+    btnOk.textContent = '确认';
+    btnOk.style.cssText = 'padding:7px 22px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;';
+    const btnCancel = document.createElement('button');
+    btnCancel.textContent = '取消';
+    btnCancel.style.cssText = 'padding:7px 22px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:13px;cursor:pointer;';
+    btnOk.addEventListener('click', function () {
+      window.__dragonFatalChoice__ = 'ok';
+      mask.remove();
+      if (window.pywebview && window.pywebview.api) dragonApi('dragon_fatal_choice', 'ok');
+    });
+    btnCancel.addEventListener('click', function () {
+      window.__dragonFatalChoice__ = 'cancel';
+      mask.remove();
+      if (window.pywebview && window.pywebview.api) dragonApi('dragon_fatal_choice', 'cancel');
+    });
+    row.appendChild(btnOk);
+    row.appendChild(btnCancel);
+    card.appendChild(title);
+    card.appendChild(text);
+    card.appendChild(row);
+    mask.appendChild(card);
+    document.body.appendChild(mask);
+  } catch (e) {}
+};
+
+/* 主动防御：内核驱动状态与底部『启动驱动』常驻弹窗 */
+function onDriverStatus(d) {
+  /* 弹窗显隐由 driver_failed 通道统一决定；此处占位以便后续扩展 */
+}
+function onDriverFailed(d) {
+  try {
+    var bar = document.getElementById('driverFailBar');
+    if (!bar) return;
+    if (d && d.show) {
+      var msg = document.getElementById('driverFailMsg');
+      if (msg) msg.textContent = d.message || '内核驱动加载失败，请关闭安全启动或重启系统后重试。';
+      bar.style.display = 'flex';
+    } else {
+      bar.style.display = 'none';
+    }
+  } catch (e) {}
+}
+(function () {
+  var btn = document.getElementById('driverFailStart');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = '正在启动…';
+    try { dragonApi('dragon_driver_start'); } catch (e) {}
+    setTimeout(function () { btn.disabled = false; btn.textContent = old; }, 2000);
+  });
+})();
+
+function nowTime() { try { return new Date().toLocaleTimeString('zh-CN', { hour12: false }); } catch (e) { return ''; } }
+function appendHomeFeed(time, text, danger) {
+  const f = $('#homeFeed'); if (!f) return;
+  const empty = f.querySelector('.feed-empty'); if (empty) empty.remove();
+  const row = document.createElement('div');
+  row.className = 'feed-row' + (danger ? ' danger' : '');
+  row.innerHTML = '<span class="feed-time">' + esc(time || '') + '</span><span class="feed-text">' + esc(text || '') + '</span>';
+  f.insertBefore(row, f.firstChild);
+  while (f.children.length > 40) f.removeChild(f.lastChild);
+}
+function loadHomeFeed() {
+  dragonApi('dragon_log_list').then(function (r) {
+    const items = (r && r.items) ? r.items : [];
+    const f = $('#homeFeed'); if (!f) return;
+    f.innerHTML = '';
+    if (!items.length) { f.innerHTML = '<div class="feed-empty">暂无防护动态</div>'; return; }
+    items.slice(0, 14).forEach(function (it) {
+      appendHomeFeed(it.time, (it.event || '') + ' · ' + (it.result || ''), (it.result === '已隔离' || it.result === '已处理'));
+    });
+  });
+}
+
+function dragonBootstrap() {
+  loadProductInfo();
+  loadEngineStatus();
+  loadProtection();
+  loadLogs();
+  loadHomeFeed();
+  loadQuarantine();
+  loadTrusted();
+  loadClean();
+  loadRepair();
+  loadToolLists();
+  dragonApi('dragon_ui_ready');
+}
+
+/* ================= 多语言 i18n ================= */
+const I18N = {
+'天龙神盾':{zhTW:'龍天神盾',en:'Dragon Antivirus',ja:'ドラゴン神盾'},
+'天龙神盾正在保护您的电脑':{zhTW:'龍天神盾正在保護您的電腦',en:'Dragon Antivirus is protecting your PC',ja:'ドラゴン神盾がパソコンを保護しています'},
+'已保护 ': {zhTW:'已保護 ',en:'Protected for ',ja:'保護期間 '},
+' 天':{zhTW:' 天',en:' days',ja:' 日'},
+'快速查杀':{zhTW:'快速查殺',en:'Quick Scan',ja:'クイックスキャン'},
+'更多扫描方式':{zhTW:'更多掃描方式',en:'More scan options',ja:'その他のスキャン方式'},
+'全盘扫描':{zhTW:'全盤掃描',en:'Full Scan',ja:'フルスキャン'},
+'自定义扫描':{zhTW:'自定義掃描',en:'Custom Scan',ja:'カスタムスキャン'},
+'自定义文件':{zhTW:'自定義檔案',en:'Custom File',ja:'カスタムファイル'},
+'自定义目录':{zhTW:'自定義目錄',en:'Custom Folder',ja:'カスタムフォルダ'},
+'检查更新':{zhTW:'檢查更新',en:'Check for Updates',ja:'更新を確認'},
+'安全防护组件':{zhTW:'安全防護組件',en:'Security Components',ja:'セキュリティコンポーネント'},
+'小组件':{zhTW:'小組件',en:'Utilities',ja:'ユーティリティ'},
+'安全日志':{zhTW:'安全日誌',en:'Security Logs',ja:'セキュリティログ'},
+'信任区':{zhTW:'信任區',en:'Trusted Zone',ja:'信頼ゾーン'},
+'隔离区':{zhTW:'隔離區',en:'Quarantine',ja:'隔離ゾーン'},
+'版本：':{zhTW:'版本：',en:'Version: ',ja:'バージョン：'},
+'病毒库：':{zhTW:'病毒庫：',en:'Virus DB: ',ja:'ウイルス定義：'},
+'病毒扫描':{zhTW:'病毒掃描',en:'Virus Scan',ja:'ウイルススキャン'},
+'此选项可以选择高级扫描方式':{zhTW:'此選項可以選擇高級掃描方式',en:'Select an advanced scan method',ja:'高度なスキャン方式を選択できます'},
+'智能扫描':{zhTW:'智能掃描',en:'Smart Scan',ja:'スマートスキャン'},
+'文件扫描':{zhTW:'文件掃描',en:'File Scan',ja:'ファイルスキャン'},
+'路径扫描':{zhTW:'路徑掃描',en:'Folder Scan',ja:'パススキャン'},
+'开始扫描':{zhTW:'開始掃描',en:'Start Scan',ja:'スキャン開始'},
+'停止':{zhTW:'停止',en:'Stop',ja:'停止'},
+'处理':{zhTW:'處理',en:'Handle',ja:'処理'},
+'删除项目':{zhTW:'刪除項目',en:'Delete Item',ja:'削除'},
+'忽略项目':{zhTW:'忽略項目',en:'Ignore Item',ja:'無視'},
+'加入隔离区':{zhTW:'加入隔離區',en:'Move to Quarantine',ja:'隔離へ移動'},
+'加入白名单':{zhTW:'加入白名單',en:'Add to Whitelist',ja:'ホワイトリストへ追加'},
+'正在扫描':{zhTW:'正在掃描',en:'Scanning',ja:'スキャン中'},
+'正在初始化中':{zhTW:'正在初始化中',en:'Initializing',ja:'初期化中'},
+'类型':{zhTW:'類型',en:'Type',ja:'種類'},
+'路径':{zhTW:'路徑',en:'Path',ja:'パス'},
+'日期':{zhTW:'日期',en:'Date',ja:'日付'},
+'时间':{zhTW:'時間',en:'Time',ja:'時刻'},
+'事件':{zhTW:'事件',en:'Event',ja:'イベント'},
+'结果':{zhTW:'結果',en:'Result',ja:'結果'},
+'判定：':{zhTW:'判定：',en:'Verdict: ',ja:'判定：'},
+'类别：':{zhTW:'類別：',en:'Category: ',ja:'種類：'},
+'置信度：':{zhTW:'置信度：',en:'Confidence: ',ja:'信頼度：'},
+'恶意':{zhTW:'惡意',en:'Malicious',ja:'悪意'},
+'安全':{zhTW:'安全',en:'Safe',ja:'安全'},
+'已忽略':{zhTW:'已忽略',en:'Ignored',ja:'無視済み'},
+'已隔离':{zhTW:'已隔離',en:'Quarantined',ja:'隔離済み'},
+'已处理':{zhTW:'已處理',en:'Handled',ja:'処理済み'},
+'已提交':{zhTW:'已提交',en:'Submitted',ja:'送信済み'},
+'成功':{zhTW:'成功',en:'Success',ja:'成功'},
+'实时防护拦截恶意程序运行':{zhTW:'實時防護攔截惡意程序運行',en:'Real-time protection blocked malware',ja:'リアルタイム防御がマルウェアをブロック'},
+'扫描发现 1 个风险文件':{zhTW:'掃描發現 1 個風險文件',en:'Scan found 1 risky file',ja:'スキャンでリスクファイルを 1 件検出'},
+'病毒库升级成功':{zhTW:'病毒庫升級成功',en:'Virus DB updated',ja:'ウイルス定義が更新されました'},
+'系统修复完成 3 个异常项':{zhTW:'系統修復完成 3 個異常項',en:'Repaired 3 abnormal items',ja:'異常項目 3 件を修復しました'},
+'风险文件':{zhTW:'風險文件',en:'risky file',ja:'リスクファイル'},
+'可疑文件':{zhTW:'可疑文件',en:'suspicious file',ja:'疑わしいファイル'},
+'判定':{zhTW:'判定',en:'Verdict',ja:'判定'},
+'类别':{zhTW:'類別',en:'Category',ja:'種類'},
+'置信度':{zhTW:'置信度',en:'Confidence',ja:'信頼度'},
+'暂无扫描记录，请选择扫描方式开始扫描':{zhTW:'暫無掃描記錄，請選擇掃描方式開始掃描',en:'No scan records. Select a scan mode to start',ja:'スキャン記録はありません。方式を選択して開始'},
+'暂无日志记录':{zhTW:'暫無日誌記錄',en:'No log records',ja:'ログはありません'},
+'隔离区暂无文件':{zhTW:'隔離區暫無文件',en:'Quarantine is empty',ja:'隔離ゾーンは空です'},
+'白名单暂无文件':{zhTW:'白名單暫無文件',en:'Whitelist is empty',ja:'ホワイトリストは空です'},
+'常用工具':{zhTW:'常用工具',en:'Tools',ja:'便利ツール'},
+'系统维护工具集，点击进入对应管理':{zhTW:'系統維護工具集，點擊進入對應管理',en:'System maintenance tools',ja:'システムメンテナンスツール'},
+'系统清理':{zhTW:'系統清理',en:'System Cleaner',ja:'システムクリーンアップ'},
+'清理系统垃圾与缓存文件':{zhTW:'清理系統垃圾與緩存文件',en:'Clean junk and cache files',ja:'ジャンクとキャッシュを削除'},
+'系统修复':{zhTW:'系統修復',en:'System Repair',ja:'システム修復'},
+'修复系统注册表项目':{zhTW:'修復系統註冊表項目',en:'Repair registry items',ja:'レジストリ項目を修復'},
+'启动项管理':{zhTW:'啟動項管理',en:'Startup Manager',ja:'スタートアップ管理'},
+'管理开机自启动项目':{zhTW:'管理開機自啟動項目',en:'Manage startup items',ja:'自動起動項目を管理'},
+'右键管理':{zhTW:'右鍵管理',en:'Context Menu Manager',ja:'右クリックメニュー管理'},
+'管理右键菜单项目':{zhTW:'管理右鍵菜單項目',en:'Manage context menu items',ja:'コンテキストメニューを管理'},
+'文件粉碎机':{zhTW:'文件粉碎機',en:'File Shredder',ja:'ファイルシュレッダー'},
+'彻底粉碎删除文件不可恢复':{zhTW:'徹底粉碎刪除文件不可恢復',en:'Permanently shred files',ja:'ファイルを完全削除'},
+'查看并管理隔离区文件':{zhTW:'查看並管理隔離區文件',en:'Manage quarantined files',ja:'隔離ファイルを管理'},
+'查看并管理信任区文件':{zhTW:'查看並管理信任區文件',en:'Manage whitelisted files',ja:'信頼ファイルを管理'},
+'返回':{zhTW:'返回',en:'Back',ja:'戻る'},
+'扫描并清理系统垃圾文件，释放磁盘空间':{zhTW:'掃描並清理系統垃圾文件，釋放磁盤空間',en:'Scan and clean junk files to free disk space',ja:'ジャンクを削除して容量を解放'},
+'开始清理':{zhTW:'開始清理',en:'Start Cleaning',ja:'クリーンアップ開始'},
+'清理中':{zhTW:'清理中',en:'Cleaning',ja:'クリーンアップ中'},
+'清理完成，已释放':{zhTW:'清理完成，已釋放',en:'Cleaning done, freed',ja:'クリーンアップ完了、解放'},
+'全选':{zhTW:'全選',en:'Select All',ja:'すべて選択'},
+'系统缓存':{zhTW:'系統緩存',en:'System Cache',ja:'システムキャッシュ'},
+'系统临时文件':{zhTW:'系統臨時文件',en:'Temporary Files',ja:'一時ファイル'},
+'回收站':{zhTW:'回收站',en:'Recycle Bin',ja:'ごみ箱'},
+'日志文件':{zhTW:'日誌文件',en:'Log Files',ja:'ログファイル'},
+'缩略图缓存':{zhTW:'縮略圖緩存',en:'Thumbnail Cache',ja:'サムネイルキャッシュ'},
+'浏览器缓存':{zhTW:'瀏覽器緩存',en:'Browser Cache',ja:'ブラウザキャッシュ'},
+'检查并修复系统异常项目':{zhTW:'檢查並修復系統異常項目',en:'Check and repair system issues',ja:'システム問題を検査・修復'},
+'立即修复':{zhTW:'立即修復',en:'Repair Now',ja:'今すぐ修復'},
+'修复中':{zhTW:'修復中',en:'Repairing',ja:'修復中'},
+'已修复':{zhTW:'已修復',en:'Fixed',ja:'修復済み'},
+'系统文件完整性':{zhTW:'系統文件完整性',en:'System File Integrity',ja:'システムファイル整合性'},
+'注册表项':{zhTW:'註冊表項',en:'Registry Items',ja:'レジストリ項目'},
+'网络配置':{zhTW:'網絡配置',en:'Network Settings',ja:'ネットワーク設定'},
+'系统服务状态':{zhTW:'系統服務狀態',en:'System Service Status',ja:'システムサービス状態'},
+'启动项关联':{zhTW:'啟動項關聯',en:'Startup Associations',ja:'スタートアップ関連'},
+'异常':{zhTW:'異常',en:'Abnormal',ja:'異常'},
+'正常':{zhTW:'正常',en:'Normal',ja:'正常'},
+'管理开机自启动项目，可禁用不必要的启动项':{zhTW:'管理開機自啟動項目，可禁用不必要的啟動項',en:'Manage startup items, disable unnecessary ones',ja:'不要な自動起動項目を無効化'},
+'管理右键菜单项目，减少右键菜单冗余':{zhTW:'管理右鍵菜單項目，減少右鍵菜單冗餘',en:'Reduce context menu clutter',ja:'コンテキストメニューを整理'},
+'点击选择要粉碎的文件':{zhTW:'點擊選擇要粉碎的文件',en:'Click to select files to shred',ja:'クリックして粉砕ファイルを選択'},
+'立即粉碎':{zhTW:'立即粉碎',en:'Shred Now',ja:'今すぐ粉砕'},
+'粉碎中':{zhTW:'粉碎中',en:'Shredding',ja:'粉砕中'},
+'已粉碎':{zhTW:'已粉碎',en:'Shredded',ja:'粉砕済み'},
+'清空列表':{zhTW:'清空列表',en:'Clear List',ja:'リストをクリア'},
+'隔离区管理':{zhTW:'隔離區管理',en:'Quarantine Management',ja:'隔離ゾーン管理'},
+'此选项可以查看并管理隔离区文件':{zhTW:'此選項可以查看並管理隔離區文件',en:'View and manage quarantined files',ja:'隔離ファイルの表示・管理'},
+'白名单管理':{zhTW:'白名單管理',en:'Whitelist Management',ja:'ホワイトリスト管理'},
+'此选项可以查看并管理白名单文件':{zhTW:'此選項可以查看並管理白名單文件',en:'View and manage whitelisted files',ja:'ホワイトリストの表示・管理'},
+'搜索文件':{zhTW:'搜索文件',en:'Search files',ja:'ファイルを検索'},
+'搜索日志':{zhTW:'搜索日誌',en:'Search logs',ja:'ログを検索'},
+'选择':{zhTW:'選擇',en:'Select',ja:'選択'},
+'新增文件':{zhTW:'新增文件',en:'Add File',ja:'ファイルを追加'},
+'新增路径':{zhTW:'新增路徑',en:'Add Path',ja:'パスを追加'},
+'提取项目':{zhTW:'提取項目',en:'Restore Item',ja:'項目を復元'},
+'移除项目':{zhTW:'移除項目',en:'Remove Item',ja:'項目を削除'},
+'查看安全事件的检测与处理记录':{zhTW:'查看安全事件的檢測與處理記錄',en:'View security event records',ja:'セキュリティイベント記録を表示'},
+'语言设置':{zhTW:'語言設置',en:'Language',ja:'言語設定'},
+'选择界面显示语言，选择后立即生效':{zhTW:'選擇界面顯示語言，選擇後立即生效',en:'Select the UI language. Takes effect immediately',ja:'表示言語を選択。すぐ反映されます'},
+'请描述您遇到的问题或建议':{zhTW:'請描述您遇到的問題或建議',en:'Describe the issue or suggestion',ja:'問題や提案をご記入ください'},
+'主动防御':{zhTW:'主動防禦',en:'Active Defense',ja:'アクティブ防御'},
+'主动防御引擎，实时拦截恶意程序入侵':{zhTW:'主動防禦引擎，實時攔截惡意程序入侵',en:'Real-time protection against malware',ja:'マルウェアをリアルタイムにブロック'},
+'进程防护':{zhTW:'進程防護',en:'Process Protection',ja:'プロセス保護'},
+'此选项可以终止恶意进程运行':{zhTW:'此選項可以終止惡意進程運行',en:'Terminate malicious processes',ja:'悪意プロセスを終了'},
+'进程暂停':{zhTW:'進程暫停',en:'Process Pause',ja:'プロセス一時停止'},
+'此选项可以暂停进程等待扫描':{zhTW:'此選項可以暫停進程等待掃描',en:'Pause processes for scanning',ja:'スキャンのため一時停止'},
+'加载防护':{zhTW:'加載防護',en:'Load Protection',ja:'ロード保護'},
+'此选项可以拦截恶意进程加载':{zhTW:'此選項可以攔截惡意進程加載',en:'Block malicious process loading',ja:'悪意プロセス読み込みをブロック'},
+'文件防护':{zhTW:'文件防護',en:'File Protection',ja:'ファイル保護'},
+'此选项可以隔离恶意文件建立':{zhTW:'此選項可以隔離惡意文件建立',en:'Quarantine malicious files',ja:'悪意ファイルを隔離'},
+'系统防护':{zhTW:'系統防護',en:'System Protection',ja:'システム保護'},
+'此选项可以实时修复系统异常':{zhTW:'此選項可以實時修復系統異常',en:'Repair system issues in real time',ja:'システム問題をリアルタイム修復'},
+'设置':{zhTW:'設置',en:'Settings',ja:'設定'},
+'引擎与运行设置，按需开启相关选项':{zhTW:'引擎與運行設置，按需開啟相關選項',en:'Engine and runtime settings',ja:'エンジンと実行設定'},
+'增强模式':{zhTW:'增強模式',en:'Enhanced Mode',ja:'拡張モード'},
+'此选项可以增强静态扫描引擎':{zhTW:'此選項可以增強靜態掃描引擎',en:'Enhance the static scan engine',ja:'静的スキャンエンジンを強化'},
+'此选项可以增强静态扫描引擎，使用更敏感的 0.4 阈值':{zhTW:'此選項可以增強靜態掃描引擎，使用更敏感的 0.4 閾值',en:'Use the more sensitive 0.4 threshold',ja:'より敏感な0.4閾値を使用'},
+'云引擎':{zhTW:'雲引擎',en:'Cloud Engine',ja:'クラウドエンジン'},
+'本地引擎判定后使用云端接口复核，默认关闭且不会替代本地结果':{zhTW:'本地引擎判定後使用雲端接口複核，默認關閉且不會替代本地結果',en:'Use a cloud check after local detection; off by default and never overrides local results',ja:'ローカル判定後にクラウドで確認。初期状態はオフで、ローカル結果を置き換えません'},
+'扩展引擎':{zhTW:'擴展引擎',en:'Extended Engine',ja:'拡張エンジン'},
+'此选项可以使用扩展规则引擎':{zhTW:'此選項可以使用擴展規則引擎',en:'Use extended rule engine',ja:'拡張ルールエンジンを使用'},
+'云端服务':{zhTW:'雲端服務',en:'Cloud Service',ja:'クラウドサービス'},
+'后缀名过滤':{zhTW:'後綴名過濾',en:'Extension Filter',ja:'拡張子フィルター'},
+'此选项仅扫描指定文件后缀名':{zhTW:'此選項僅掃描指定文件後綴名',en:'Scan only specified extensions',ja:'指定拡張子のみスキャン'},
+'开机启动':{zhTW:'開機啟動',en:'Start with Windows',ja:'Windows起動時に開始'},
+'此选项可以设定开机自动运行':{zhTW:'此選項可以設定開機自動運行',en:'Run automatically at startup',ja:'起動時に自動実行'},
+'关于我们':{zhTW:'關於我們',en:'About Us',ja:'私たちについて'},
+'主页':{zhTW:'主頁',en:'Home',ja:'ホーム'},
+'菜单':{zhTW:'菜單',en:'Menu',ja:'メニュー'},
+'最小化':{zhTW:'最小化',en:'Minimize',ja:'最小化'},
+'关闭':{zhTW:'關閉',en:'Close',ja:'閉じる'},
+'引擎：':{zhTW:'引擎：',en:'Engine: ',ja:'エンジン：'},
+'已保护：':{zhTW:'已保護：',en:'Protected: ',ja:'保護期間：'},
+'请先勾选要处理的文件':{zhTW:'請先勾選要處理的文件',en:'Select files to handle first',ja:'処理するファイルを選択してください'},
+'请先勾选要提取的项目':{zhTW:'請先勾選要提取的項目',en:'Select items to restore first',ja:'復元する項目を選択してください'},
+'请先勾选要移除的项目':{zhTW:'請先勾選要移除的項目',en:'Select items to remove first',ja:'削除する項目を選択してください'},
+'请先勾选要加入白名单的项目':{zhTW:'請先勾選要加入白名單的項目',en:'Select items to whitelist first',ja:'ホワイトリストへ追加する項目を選択'},
+'已删除 ': {zhTW:'已刪除 ',en:'Deleted ',ja:'削除済み '},
+'已忽略 ': {zhTW:'已忽略 ',en:'Ignored ',ja:'無視済み '},
+'已加入隔离区 ': {zhTW:'已加入隔離區 ',en:'Moved to quarantine: ',ja:'隔離へ移動: '},
+'已加入白名单 ': {zhTW:'已加入白名單 ',en:'Added to whitelist: ',ja:'ホワイトリストへ追加: '},
+'已提取 ': {zhTW:'已提取 ',en:'Restored ',ja:'復元済み '},
+'已移除 ': {zhTW:'已移除 ',en:'Removed ',ja:'削除済み '},
+'已加入隔离区：':{zhTW:'已加入隔離區：',en:'Quarantined: ',ja:'隔離へ移動: '},
+'已加入白名单：':{zhTW:'已加入白名單：',en:'Whitelisted: ',ja:'ホワイトリストへ追加: '},
+'已添加：':{zhTW:'已添加：',en:'Added: ',ja:'追加済み: '},
+'已取消选择':{zhTW:'已取消選擇',en:'Selection cancelled',ja:'選択をキャンセルしました'},
+'已是最新版本':{zhTW:'已是最新版本',en:'Already up to date',ja:'すでに最新版です'},
+'界面语言：':{zhTW:'界面語言：',en:'UI language: ',ja:'表示言語：'},
+'请先勾选要清理的项目':{zhTW:'請先勾選要清理的項目',en:'Select items to clean first',ja:'削除する項目を選択してください'},
+'没有需要修复的异常项':{zhTW:'沒有需要修復的異常項',en:'No items need repair',ja:'修復項目はありません'},
+'请先添加要粉碎的文件':{zhTW:'請先添加要粉碎的文件',en:'Add files to shred first',ja:'粉砕するファイルを追加してください'},
+'已上报：':{zhTW:'已上報：',en:'Reported: ',ja:'報告済み: '},
+'云端分析中':{zhTW:'雲端分析中',en:'Cloud analysis in progress',ja:'クラウド分析中'},
+'点击可重新选择':{zhTW:'點擊可重新選擇',en:'Click to reselect',ja:'クリックで再選択'},
+'列表已清空':{zhTW:'列表已清空',en:'List cleared',ja:'リストをクリアしました'},
+'已开启':{zhTW:'已開啟',en:'Enabled',ja:'有効'},
+'已关闭':{zhTW:'已關閉',en:'Disabled',ja:'無効'},
+'已启用':{zhTW:'已啟用',en:'Enabled',ja:'有効'},
+'已禁用':{zhTW:'已禁用',en:'Disabled',ja:'無効'},
+'共 ': {zhTW:'共 ',en:'Total ',ja:'合計 '},
+' 项，已启用 ': {zhTW:' 項，已啟用 ',en:' items, enabled ',ja:' 項目、有効 '},
+' 项':{zhTW:' 項',en:' items',ja:' 項目'},
+'发现 ': {zhTW:'發現 ',en:'Found ',ja:'検出 '},
+' 个病毒，扫描 ': {zhTW:' 個病毒，掃描 ',en:' virus(es), scanned ',ja:' 件のウイルス、スキャン済み '},
+' 个文件，耗时 ': {zhTW:' 個文件，耗時 ',en:' files in ',ja:' ファイル、所要時間 '},
+' 秒':{zhTW:' 秒',en:' s',ja:' 秒'},
+'个病毒':{zhTW:'個病毒',en:' virus(es)',ja:'件のウイルス'},
+'个文件':{zhTW:'個文件',en:' files',ja:'ファイル'},
+'耗时 ': {zhTW:'耗時 ',en:'took ',ja:'所要 '},
+'扫描完成：':{zhTW:'掃描完成：',en:'Scan complete: ',ja:'スキャン完了: '},
+'正在扫描：':{zhTW:'正在掃描：',en:'Scanning: ',ja:'スキャン中: '},
+'已扫描 ': {zhTW:'已掃描 ',en:'Scanned ',ja:'スキャン済み '},
+'扫描出错：':{zhTW:'掃描出錯：',en:'Scan error: ',ja:'スキャンエラー: '},
+'扫描已停止':{zhTW:'掃描已停止',en:'Scan stopped',ja:'スキャン停止'},
+'最小化（浏览器预览模式）':{zhTW:'最小化（瀏覽器預覽模式）',en:'Minimize (browser preview)',ja:'最小化（プレビュー）'},
+'关闭（浏览器预览模式）':{zhTW:'關閉（瀏覽器預覽模式）',en:'Close (browser preview)',ja:'閉じる（プレビュー）'},
+'主动防御':{zhTW:'主動防禦',en:'Active Defense',ja:'アクティブ防御'},
+'防护等级':{zhTW:'防護等級',en:'Protection Level',ja:'防護レベル'},
+'防护等级与实时防护开关，选择等级后开关自动联动':{zhTW:'防護等級與即時防護開關，選擇等級後開關自動聯動',en:'Protection level and real-time protection switches; switches follow the selected level',ja:'防護レベルとリアルタイム防護スイッチ、レベル選択でスイッチが自動連動します'},
+'低（仅用户态）':{zhTW:'低（僅用戶態）',en:'Low (user-mode only)',ja:'低（ユーザーモードのみ）'},
+'中（驱动+用户态）':{zhTW:'中（驅動+用戶態）',en:'Medium (driver + user-mode)',ja:'中（ドライバー+ユーザーモード）'},
+'高（驱动+用户态+引擎扫描）':{zhTW:'高（驅動+用戶態+引擎掃描）',en:'High (driver + user-mode + engine scan)',ja:'高（ドライバー+ユーザーモード+エンジンスキャン）'},
+'驱动防护':{zhTW:'驅動防護',en:'Driver Protection',ja:'ドライバー防護'},
+'用户态防护':{zhTW:'用戶態防護',en:'User-mode Protection',ja:'ユーザーモード防護'},
+'引擎扫描':{zhTW:'引擎掃描',en:'Engine Scan',ja:'エンジンスキャン'},
+'自定义防护':{zhTW:'自定義防護',en:'Custom Protection',ja:'カスタム防護'},
+'文件实时监控':{zhTW:'檔案即時監控',en:'Real-time File Monitor',ja:'ファイルリアルタイム監視'},
+'静态轮询扫描':{zhTW:'靜態輪詢掃描',en:'Static Poll Scan',ja:'静的ポーリングスキャン'},
+'关键位置保护':{zhTW:'關鍵位置保護',en:'Key Position Protection',ja:'重要箇所保護'},
+'此选项可以使用内核驱动级防护':{zhTW:'此選項可以使用內核驅動級防護',en:'Use kernel-level driver protection',ja:'カーネルドライバー級の防護を使用します'},
+'此选项可以轮询 WMI / Read API 监控进程':{zhTW:'此選項可以輪詢 WMI / Read API 監控進程',en:'Poll WMI / Read API to monitor processes',ja:'WMI / Read API をポーリングしてプロセスを監視します'},
+'此选项可以暂停进程后用引擎扫描':{zhTW:'此選項可以暫停進程後用引擎掃描',en:'Suspend processes and scan with the engine',ja:'プロセスを一時停止してエンジンでスキャンします'},
+'此选项可以启用自定义防护规则':{zhTW:'此選項可以啟用自定義防護規則',en:'Enable custom protection rules',ja:'カスタム防護ルールを有効にします'},
+'此选项可静态扫描文件创建/修改与压缩包内容':{zhTW:'此選項可靜態掃描檔案創建/修改與壓縮包內容',en:'Statically scan file create/modify and archive contents',ja:'ファイルの作成/変更と圧縮ファイルの内容を静的スキャンします'},
+'此选项可轮询扫描关键目录（占用较高，默认仅高级别开启）':{zhTW:'此選項可輪詢掃描關鍵目錄（佔用較高，預設僅高等級開啟）',en:'Poll key directories (resource-heavy; enabled only on high level by default)',ja:'重要ディレクトリをポーリングスキャンします（リソース消費が高く、デフォルトでは高レベルでのみ有効）'},
+'此选项可以静态扫描关键系统位置':{zhTW:'此選項可以靜態掃描關鍵系統位置',en:'Statically scan key system locations',ja:'重要なシステム箇所を静的スキャンします'},
+'防护等级：':{zhTW:'防護等級：',en:'Protection level: ',ja:'防護レベル: '},
+'清理出错：':{zhTW:'清理出錯：',en:'Cleanup error: ',ja:'クリーンアップエラー: '},
+'修复出错：':{zhTW:'修復出錯：',en:'Repair error: ',ja:'修復エラー: '},
+'粉碎出错：':{zhTW:'粉碎出錯：',en:'Shred error: ',ja:'消去エラー: '},
+'加入失败：':{zhTW:'加入失敗：',en:'Add failed: ',ja:'追加失敗: '},
+};
+let curLang = localStorage.getItem('dragon_lang') || '简体中文';
+const _langMap = {'简体中文':'zh-CN','繁体中文':'zh-TW','English':'en','日本語':'ja'};
+const LANG_CODE = {'简体中文':'zhCN','繁体中文':'zhTW','English':'en','日本語':'ja'};
+let textNodes = [];
+let attrNodes = [];
+let protectDaysVal = 1;
+let lastScanState = { t: '', d: '' };
+let lastStat = '';
+function translateStr(s) {
+  if (!s) return s;
+  let out = String(s);
+  const code = LANG_CODE[curLang] || 'zhCN';
+  if (code === 'zhCN') return out;
+  const keys = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i];
+    const v = I18N[k] ? I18N[k][code] : undefined;
+    if (v !== undefined && v !== k && out.indexOf(k) > -1) out = out.split(k).join(v);
+  }
+  return out;
+}
+function snapshotTexts() {
+  textNodes = [];
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) {
+    const n = w.currentNode;
+    if (!n.nodeValue || !n.nodeValue.trim()) continue;
+    if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains('i18n-dyn')) continue;
+    textNodes.push({ n: n, orig: n.nodeValue });
+  }
+}
+function snapshotAttrs() {
+  attrNodes = [];
+  document.querySelectorAll('.snav').forEach(function (n) {
+    if (n.getAttribute('title')) attrNodes.push({ n: n, k: 'title', v: n.getAttribute('title') });
+  });
+  ['geliSearch', 'xinrenSearch', 'rizhiSearch'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el && el.getAttribute('placeholder')) attrNodes.push({ n: el, k: 'placeholder', v: el.getAttribute('placeholder') });
+  });
+  ['btnMenu', 'btnInfo', 'btnMin', 'btnClose', 'qscanCaret'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el && el.getAttribute('title')) attrNodes.push({ n: el, k: 'title', v: el.getAttribute('title') });
+  });
+}
+function applyLang(lang) {
+  curLang = lang;
+  try { localStorage.setItem('dragon_lang', lang); } catch (e) {}
+  document.documentElement.lang = _langMap[lang] || 'zh-CN';
+  const code = LANG_CODE[lang] || 'zhCN';
+  const keys = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  textNodes.forEach(function (o) {
+    let s = o.orig;
+    if (code !== 'zhCN') {
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const v = I18N[k] ? I18N[k][code] : undefined;
+        if (v !== undefined && v !== k && s.indexOf(k) > -1) s = s.split(k).join(v);
+      }
+    }
+    if (s !== o.n.nodeValue) o.n.nodeValue = s;
+  });
+  attrNodes.forEach(function (o) {
+    o.n.setAttribute(o.k, translateStr(o.v));
+  });
+  refreshDyn(lang);
+}
+function refreshDyn(lang) {
+  const el1 = document.getElementById('protectDays');
+  const el2 = document.getElementById('protectDays2');
+  if (el1) el1.textContent = translateStr('已保护 ' + protectDaysVal + ' 天');
+  if (el2) el2.textContent = protectDaysVal;
+  const st = document.getElementById('scanTitle');
+  const sd = document.getElementById('scanDesc');
+  if (st && lastScanState.t) st.textContent = translateStr(lastScanState.t);
+  if (sd && lastScanState.d) sd.textContent = translateStr(lastScanState.d);
+  const ss = document.getElementById('scanStat');
+  if (ss && lastStat) ss.textContent = translateStr(lastStat);
+  ['qidongHint', 'youjianHint'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el && el.dataset.origText) el.textContent = translateStr(el.dataset.origText);
+  });
+}
+snapshotTexts();
+snapshotAttrs();
+applyLang(curLang);
+
+/* ================= 通用 ================= */
+const $ = function (s) { return document.querySelector(s); };
+const sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = translateStr(msg);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+/* ================= 页面切换 ================= */
+const navItems = document.querySelectorAll('.snav');
+const pages = document.querySelectorAll('.page');
+function switchPage(name) {
+  navItems.forEach(function (n) { n.classList.toggle('active', n.dataset.page === name); });
+  pages.forEach(function (p) { p.classList.toggle('active', p.id === 'page-' + name); });
+  if (name === 'home') loadHomeFeed();
+  if (name === 'scan') setScanOps(scanRunning.flag ? 'running' : 'result');
+  closeMenu();
+}
+navItems.forEach(function (n) {
+  n.addEventListener('click', function () { switchPage(n.dataset.page); });
+});
+
+/* ================= 右上角菜单 ================= */
+const topMenu = $('#topMenu');
+function closeMenu() { topMenu.classList.remove('open'); }
+$('#btnMenu').addEventListener('click', function (e) {
+  e.stopPropagation();
+  topMenu.classList.toggle('open');
+});
+document.addEventListener('click', function (e) {
+  if (!topMenu.contains(e.target)) closeMenu();
+});
+
+function gotoPanel(id) {
+  switchPage('tools');
+  openPanel(id);
+}
+function actMap(act) {
+  switch (act) {
+    case 'rizhi':   gotoPanel('panel-rizhi'); break;
+    case 'geli':    gotoPanel('panel-geli'); break;
+    case 'xinren':  gotoPanel('panel-xinren'); break;
+    case 'gengxin': toast('已是最新版本'); break;
+    case 'shezhi':  switchPage('settings'); break;
+    case 'goto-guard': switchPage('guard'); break;
+    case 'yuyan':   gotoPanel('panel-yuyan'); break;
+    case 'guanyu':  openAbout(); break;
+  }
+}
+topMenu.querySelectorAll('.mi').forEach(function (mi) {
+  mi.addEventListener('click', function () {
+    actMap(mi.dataset.act);
+    closeMenu();
+  });
+});
+document.querySelectorAll('.hf-item').forEach(function (it) {
+  it.addEventListener('click', function () {
+    const act = it.dataset.act;
+    if (act === 'gengxin') { toast('已是最新版本'); return; }
+    actMap(act);
+  });
+});
+document.querySelectorAll('.feed-link').forEach(function (it) {
+  it.addEventListener('click', function () { actMap(it.dataset.act); });
+});
+document.querySelectorAll('.ov-util[data-act]').forEach(function (it) {
+  it.addEventListener('click', function () { actMap(it.dataset.act); });
+});
+
+/* ================= 关于弹窗 ================= */
+function openAbout() { $('#aboutModal').classList.add('open'); }
+function closeAbout() { $('#aboutModal').classList.remove('open'); }
+$('#aboutClose').addEventListener('click', closeAbout);
+$('#aboutModal').addEventListener('click', function (e) {
+  if (e.target === this) closeAbout();
+});
+
+/* ================= 窗口控制 ================= */
+$('#btnMin').addEventListener('click', function () {
+  dragonApi('dragon_window_minimize');
+});
+$('#btnClose').addEventListener('click', function () {
+  dragonApi('dragon_window_close');
+});
+
+(function () {
+  const tb = $('#titlebar');
+  let drag = null;
+  tb.addEventListener('mousedown', function (e) {
+    if (e.target.closest('.tb-btn')) return;
+    if (!dragonReady()) return;
+    drag = { x: e.screenX, y: e.screenY };
+    dragonApi('dragon_window_drag', 0, 0, 'start');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (!drag) return;
+    dragonApi('dragon_window_drag', e.screenX - drag.x, e.screenY - drag.y, 'move');
+    drag.x = e.screenX;
+    drag.y = e.screenY;
+  });
+  document.addEventListener('mouseup', function () {
+    if (!drag) return;
+    drag = null;
+    dragonApi('dragon_window_drag', 0, 0, 'end');
+  });
+})();
+
+/* ================= 首页：保护天数（由后端按首次安装日推算） ================= */
+function applyProtectDays(days) {
+  days = Math.max(1, parseInt(days, 10) || 1);
+  protectDaysVal = days;
+  var el1 = document.getElementById('protectDays');
+  var el2 = document.getElementById('protectDays2');
+  if (el1) el1.textContent = translateStr('已保护 ' + days + ' 天');
+  if (el2) el2.textContent = days;
+}
+
+/* 顶部「智能扫描」+ 旁侧下拉框：下拉提供全盘 / 自定义文件 / 自定义目录 */
+(function () {
+  const caret = document.getElementById('qscanCaret');
+  const menu = document.getElementById('qscanMenu');
+  if (caret && menu) {
+    caret.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+      caret.classList.toggle('open', !menu.hidden);
+    });
+    menu.querySelectorAll('.scan-menu-item').forEach(function (it) {
+      it.addEventListener('click', function () {
+        menu.hidden = true;
+        caret.classList.remove('open');
+        startScan(it.dataset.mode);
+      });
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.hidden && e.target !== caret && !caret.contains(e.target) && !menu.contains(e.target)) {
+        menu.hidden = true;
+        caret.classList.remove('open');
+      }
+    });
+  }
+})();
+
+/* ================= 扫描 ================= */
+function basename(p) {
+  p = String(p);
+  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+  return i >= 0 ? p.slice(i + 1) : p;
+}
+
+$('#quickScan').addEventListener('click', function () {
+  startScan('智能扫描');
+});
+$('#srClose').addEventListener('click', function () {
+  $('#scanResult').classList.remove('show');
+});
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ================= 扫描页 ================= */
+let lastScanMode = '智能扫描';
+const scanRunning = { flag: false };
+const scanStat = { scanned: 0, total: 0, found: 0, secs: 0 };
+function setScanOps(stage) {
+  const running = (stage === 'running');
+  $('#scanStop').style.display = running ? '' : 'none';
+  $('#scanHandle').style.display = running ? 'none' : '';
+  // 扫描中隐藏返回；停止/完成后显示返回并进入处置模式（可勾选处置）
+  $('#scanBack').style.display = running ? 'none' : '';
+}
+function setScanTitle(t, d) {
+  lastScanState = { t: t, d: d };
+  $('#scanTitle').textContent = translateStr(t);
+  $('#scanDesc').textContent = translateStr(d);
+}
+function resetScanPage() {
+  scanStat.scanned = 0;
+  scanStat.total = 0;
+  scanStat.found = 0;
+  scanStat.secs = 0;
+  $('#scanBody').innerHTML = '<div class="t-empty" id="scanEmpty">暂无扫描记录</div>';
+  $('#scanStat').innerHTML = '';
+  $('#scanAll').classList.remove('on');
+}
+function stopScanToHome() {
+  if (scanRunning.flag) dragonApi('dragon_scan_stop');
+  scanRunning.flag = false;
+  switchPage('home');
+  setScanTitle('病毒扫描', '正在初始化中…');
+  setScanOps('result');
+}
+
+function startScan(mode) {
+  lastScanMode = mode;
+  if (mode === '自定义文件') {
+    dragonApi('dragon_select_path').then(function (p) {
+      if (dragonErr(p) || !p) { toast('已取消选择'); return; }
+      launchScan(mode, p.path || p);
+    });
+    return;
+  }
+  if (mode === '自定义目录') {
+    dragonApi('dragon_select_folder').then(function (p) {
+      if (dragonErr(p) || !p) { toast('已取消选择'); return; }
+      launchScan(mode, p.path || p);
+    });
+    return;
+  }
+  launchScan(mode, '');
+}
+
+function launchScan(mode, target) {
+  switchPage('scan');
+  resetScanPage();
+  setScanTitle('正在扫描', '正在准备扫描任务…');
+  setScanOps('running');
+  scanRunning.flag = true;
+  dragonApi('dragon_scan_start', mode, target).then(function (r) {
+    const err = dragonErr(r);
+    if (err) {
+      scanRunning.flag = false;
+      setScanTitle('病毒扫描', '扫描启动失败：' + err);
+      setScanOps('result');
+      toast('扫描启动失败：' + err);
+    }
+  });
+}
+
+function onScanState(d) {
+  if (d.stage === 'running') {
+    scanRunning.flag = true;
+    setScanTitle(d.title || '正在扫描', d.desc || '');
+    setScanOps('running');
+  } else {
+    scanRunning.flag = false;
+    setScanOps('result');
+    if (d.title) setScanTitle(d.title, d.desc || '');
+  }
+}
+
+function onScanStat(d) {
+  scanStat.scanned = d.scanned || 0;
+  scanStat.total = d.total || 0;
+  scanStat.found = d.found || 0;
+  scanStat.secs = d.secs || 0;
+  renderStat();
+}
+
+function onScanItem(d) {
+  addScanResult(d);
+}
+
+function onScanDone(d) {
+  scanRunning.flag = false;
+  if (d) {
+    scanStat.scanned = d.scanned || scanStat.scanned;
+    scanStat.total = d.total || scanStat.total;
+    scanStat.found = d.found || scanStat.found;
+    scanStat.secs = d.secs || scanStat.secs;
+  }
+  setScanTitle('病毒扫描', '扫描完成：扫描 ' + scanStat.scanned + ' 个文件，发现 ' + scanStat.found + ' 个风险');
+  setScanOps('result');
+  renderStat();
+  toast('扫描完成');
+}
+
+$('#scanStop').addEventListener('click', function () {
+  // 停止：仅终止扫描，留在扫描页进入处置模式（显示返回 + 可勾选处置），不直接退出
+  if (scanRunning.flag) dragonApi('dragon_scan_stop');
+  scanRunning.flag = false;
+  setScanOps('result');
+  setScanTitle('病毒扫描', '扫描已停止，可勾选结果进行处置');
+});
+$('#scanBack').addEventListener('click', stopScanToHome);
+
+function addScanResult(res) {
+  const empty = $('#scanEmpty');
+  if (empty) empty.remove();
+  const body = $('#scanBody');
+  const path = res.path || res.fileName || '';
+  // 检测手段（只用哪种手段检出的）由 layer 映射：1 签名 / 2 哈希 / 3 YARA / 4 LightGBM / 5 云
+  const METHOD_BY_LAYER = { 1: 'SIG', 2: 'HASH', 3: 'YARA', 4: 'ML', 5: 'CLOUD' };
+  const ft = res.file_type || 'FILE';
+  const method = METHOD_BY_LAYER[res.layer] || 'UNK';
+  const score = Math.round((res.confidence || 0) * 100);
+  const verdict = res.malicious ? 'malware' : 'clean';
+  // 格式：文件类型|检测手段:评分!|判定  例：PE|ML:97!|malware
+  const descriptor = ft + '|' + method + ':' + score + '!|' + verdict;
+  const row = document.createElement('div');
+  row.className = 't-row';
+  row.dataset.path = path;
+  row.innerHTML =
+    '<div class="r-cb"><span class="cb"></span></div>' +
+    '<div class="r-col r-detect ' + (res.malicious ? 'bad' : 'safe') + '">' + esc(descriptor) + '</div>' +
+    '<div class="r-col r-path">' + esc(path) + '</div>';
+  row.querySelector('.cb').addEventListener('click', function () { row.querySelector('.cb').classList.toggle('on'); });
+  body.insertBefore(row, body.firstChild);
+}
+
+function restoreScanEmpty() {
+  if ($('#scanBody').querySelectorAll('.t-row').length) return;
+  $('#scanBody').innerHTML = '<div class="t-empty" id="scanEmpty">暂无扫描记录</div>';
+}
+
+function renderStat() {
+  if (!scanStat.scanned && !scanStat.total) { lastStat = ''; $('#scanStat').innerHTML = ''; return; }
+  lastStat = '发现 ' + scanStat.found + ' 个病毒，扫描 ' + scanStat.scanned + ' 个文件，耗时 ' + scanStat.secs + ' 秒';
+  $('#scanStat').innerHTML = translateStr('发现 ') + '<b>' + scanStat.found + '</b>' + translateStr(' 个病毒，扫描 ') + '<b>' + scanStat.scanned + '</b>' + translateStr(' 个文件，耗时 ') + '<b>' + scanStat.secs + '</b>' + translateStr(' 秒');
+}
+
+function refreshStat() {
+  renderStat();
+}
+
+$('#handleBtn').addEventListener('click', function (e) {
+  e.stopPropagation();
+  closeAllSelect();
+  $('#scanHandle').classList.toggle('open');
+});
+$('#scanHandle').querySelectorAll('li').forEach(function (li) {
+  li.addEventListener('click', function () {
+    $('#scanHandle').classList.remove('open');
+    const v = li.dataset.v;
+    const checked = getCheckedRows('#scanBody');
+    if (!checked.length) { toast('请先勾选要处理的文件'); return; }
+    const paths = checked.map(function (r) { return r.dataset.path || ''; }).filter(Boolean);
+    if (!paths.length) { toast('选中项缺少路径信息'); return; }
+    const action = (v === '删除项目') ? 'delete'
+      : (v === '忽略项目') ? 'ignore'
+      : (v === '加入隔离区') ? 'quarantine' : 'trusted';
+    dragonApi('dragon_scan_handle', action, paths).then(function (r) {
+      const err = dragonErr(r);
+      if (err) { toast('处理失败：' + err); return; }
+      if (action === 'delete') {
+        checked.forEach(function (row) { row.remove(); });
+        toast('已删除 ' + paths.length + ' 个项目');
+        restoreScanEmpty();
+      } else if (action === 'ignore') {
+        checked.forEach(function (row) {
+          const t = row.querySelector('.tag');
+          if (t) { t.textContent = translateStr('已忽略'); t.className = 'tag safe'; }
+          const d = row.querySelector('.r-detect');
+          if (d) { d.textContent = d.textContent + ' · 已忽略'; d.classList.remove('bad'); d.classList.add('safe'); }
+        });
+        toast('已忽略 ' + paths.length + ' 个项目');
+      } else if (action === 'quarantine') {
+        toast('已加入隔离区 ' + paths.length + ' 项');
+        loadQuarantine();
+      } else {
+        toast('已加入白名单 ' + paths.length + ' 项');
+        loadTrusted();
+      }
+      setScanOps('result');
+    });
+  });
+});
+
+$('#scanAll').addEventListener('click', function () {
+  toggleAll(this, '#scanBody');
+});
+
+/* ================= 开关（事件委托，跳过启动项/右键列表开关） ================= */
+document.addEventListener('click', function (e) {
+  const sw = e.target.closest('.switch');
+  if (!sw || sw.hasAttribute('data-list-sw')) return;
+  const guardItem = sw.closest('[data-sw]');
+  if (guardItem) {
+    const key = guardItem.dataset.sw;
+    const name = guardItem.querySelector('.sw-name').textContent;
+    // 点击期间禁用，避免快速双击造成后端状态机抖动（"开关玄学"根因之一）
+    sw.style.pointerEvents = 'none';
+    const next = !sw.classList.contains('on');
+    sw.classList.toggle('on', next);
+    toast(name + '：' + (next ? '已开启' : '已关闭'));
+    // 调用后从权威配置回填，保证 UI 永远 == 后端真实状态
+    dragonApi('dragon_protection_switch', key, next)
+      .then(loadProtection).catch(loadProtection)
+      .finally(function () { sw.style.pointerEvents = ''; });
+    return;
+  }
+  const setItem = sw.closest('[data-setting]');
+  sw.classList.toggle('on');
+  const name = sw.closest('.sw-item').querySelector('.sw-name').textContent;
+  toast(name + '：' + (sw.classList.contains('on') ? '已开启' : '已关闭'));
+  if (setItem) {
+    const on = sw.classList.contains('on');
+    if (setItem.dataset.setting === 'enhanced') dragonApi('dragon_enhanced_mode', on);
+    else if (setItem.dataset.setting === 'cloudEngine') dragonApi('dragon_cloud_engine', on);
+    else if (setItem.dataset.setting === 'autoStart') dragonApi('dragon_auto_start', on);
+  }
+});
+
+/* ================= 主动防御：防护等级 ================= */
+const PROT_LEVELS = {
+  low:    { driver: false, userMode: true,  engineScan: false, realtime: false, keyPositions: false, staticPoll: false },
+  medium: { driver: true,  userMode: true,  engineScan: false, realtime: true,  keyPositions: false, staticPoll: false },
+  high:   { driver: true,  userMode: true,  engineScan: true,  realtime: true,  keyPositions: true,  staticPoll: true  }
+};
+const PROT_LEVEL_LABEL = { low: '低', medium: '中', high: '高' };
+function applyProtLevel(level, silent) {
+  const map = PROT_LEVELS[level] || PROT_LEVELS.medium;
+  $('#guardSwitches').querySelectorAll('[data-sw]').forEach(function (it) {
+    it.querySelector('.switch').classList.toggle('on', !!map[it.dataset.sw]);
+  });
+  if (!silent) dragonApi('dragon_protection_level', level).then(loadProtection).catch(loadProtection);
+}
+
+function applyProtection(cfg) {
+  if (!cfg) return;
+  const level = (cfg.level === 'low' || cfg.level === 'high') ? cfg.level : 'medium';
+  const label = $('#guardLevel').querySelector('span');
+  if (label) label.textContent = PROT_LEVEL_LABEL[level] || '中';
+  if (cfg.switches) {
+    $('#guardSwitches').querySelectorAll('[data-sw]').forEach(function (it) {
+      it.querySelector('.switch').classList.toggle('on', !!cfg.switches[it.dataset.sw]);
+    });
+  } else {
+    applyProtLevel(level, true);
+  }
+  syncHome(cfg);
+}
+
+function loadProtection() {
+  dragonApi('dragon_protection_config').then(function (cfg) {
+    applyProtection(cfg && !cfg.error ? cfg : { level: 'medium' });
+  });
+}
+
+(function () {
+  bindSelect('guardLevel', function (v) {
+    const level = v === '低' ? 'low' : (v === '高' ? 'high' : 'medium');
+    applyProtLevel(level, false);
+    toast(translateStr('防护等级：') + v);
+  });
+})();
+
+
+/* 首页：主动防御实时事件（今日拦截计数等） */
+function onDefenseEvent(d) {
+  if (!d) return;
+  if (d.kind === 'blocked') {
+    const el = document.getElementById('mBlocked');
+    if (el) el.textContent = String(d.count || 0);
+  }
+}
+
+/* 首页：主动防御快速设置 与 防护配置同步 */
+function syncHome(cfg) {
+  if (!cfg) return;
+  const blk = document.getElementById('mBlocked');
+  if (blk) blk.textContent = String(cfg.blocked_today || 0);
+  const level = (cfg.level === 'low' || cfg.level === 'high') ? cfg.level : 'medium';
+  const seg = document.getElementById('homeLevel');
+  if (seg) seg.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === level); });
+  const wrap = document.getElementById('homeSwitches');
+  const map = PROT_LEVELS[level] || PROT_LEVELS.medium;
+  if (wrap) {
+    wrap.querySelectorAll('[data-sw]').forEach(function (it) {
+      const k = it.dataset.sw;
+      const on = cfg.switches ? !!cfg.switches[k] : !!map[k];
+      const sw = it.querySelector('.switch');
+      if (sw) sw.classList.toggle('on', on);
+    });
+  }
+  const hero = document.getElementById('homeHero');
+  if (hero) {
+    const on = cfg.switches ? (cfg.switches.userMode || cfg.switches.driver) : (map.userMode || map.driver);
+    hero.classList.toggle('at-risk', !on);
+    const st = document.getElementById('mStatus');
+    if (st) st.textContent = on ? '实时防护' : '防护已关闭';
+    const ht = hero.querySelector('.home-title');
+    if (ht) ht.textContent = on ? '您的电脑已受保护' : '您的电脑存在风险';
+  }
+}
+(function () {
+  const seg = document.getElementById('homeLevel');
+  if (seg) seg.addEventListener('click', function (e) {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    const level = b.dataset.v;
+    seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    applyProtLevel(level, false);
+  });
+  document.querySelectorAll('.hg-link').forEach(function (el) {
+    el.addEventListener('click', function () { actMap(el.dataset.act); });
+  });
+})();
+/* ================= 工具面板 ================= */
+const toolMap = {
+  '系统清理': 'panel-qingli', '系统修复': 'panel-xiufu', '启动项管理': 'panel-qidong',
+  '右键管理': 'panel-youjian', '文件粉碎机': 'panel-fensui',
+  '隔离区': 'panel-geli', '信任区': 'panel-xinren', '安全日志': 'panel-rizhi'
+};
+function openPanel(id) {
+  $('#toolGroups').style.display = 'none';
+  $('#toolListTitle').style.display = 'none';
+  document.querySelectorAll('.tool-panel').forEach(function (p) { p.classList.remove('open'); });
+  $('#' + id).classList.add('open');
+}
+function closePanels() {
+  document.querySelectorAll('.tool-panel').forEach(function (p) { p.classList.remove('open'); });
+  $('#toolGroups').style.display = '';
+  $('#toolListTitle').style.display = '';
+}
+document.querySelectorAll('.tool-item').forEach(function (it) {
+  it.addEventListener('click', function () {
+    const id = toolMap[it.dataset.name];
+    if (id) openPanel(id);
+  });
+});
+document.querySelectorAll('.panel-back').forEach(function (b) {
+  b.addEventListener('click', closePanels);
+});
+
+function getCheckedRows(bodySel) {
+  const rows = [];
+  $(bodySel).querySelectorAll('.t-row').forEach(function (r) {
+    const c = r.querySelector('.r-cb .cb');
+    if (c && c.classList.contains('on')) rows.push(r);
+  });
+  return rows;
+}
+function toggleAll(allEl, bodySel) {
+  const on = !allEl.classList.contains('on');
+  allEl.classList.toggle('on', on);
+  $(bodySel).querySelectorAll('.r-cb .cb').forEach(function (c) { c.classList.toggle('on', on); });
+}
+function addRow(bodySel, col1, col2, bold) {
+  const empty = $(bodySel).querySelector('.t-empty');
+  if (empty) empty.remove();
+  const row = document.createElement('div');
+  row.className = 't-row';
+  row.innerHTML =
+    '<div class="r-cb"><span class="cb"></span></div>' +
+    '<div class="r-col' + (bold ? ' bold' : '') + '">' + esc(col1) + '</div>' +
+    '<div class="r-col">' + esc(col2) + '</div>';
+  row.querySelector('.cb').addEventListener('click', function () { row.querySelector('.cb').classList.toggle('on'); });
+  $(bodySel).insertBefore(row, $(bodySel).firstChild);
+  return row;
+}
+function today() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function closeAllSelect() {
+  document.querySelectorAll('.select.open').forEach(function (s) { s.classList.remove('open'); });
+}
+function bindSelect(selId, onPick) {
+  const sel = $('#' + selId);
+  sel.querySelector('.select-btn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    closeAllSelect();
+    sel.classList.toggle('open');
+  });
+  sel.querySelectorAll('li').forEach(function (li) {
+    li.addEventListener('click', function () {
+      sel.querySelector('span').textContent = li.dataset.v;
+      sel.classList.remove('open');
+      if (onPick) onPick(li.dataset.v);
+    });
+  });
+}
+document.addEventListener('click', closeAllSelect);
+
+function loadQuarantine() {
+  dragonApi('dragon_quarantine_list').then(function (r) {
+    const body = $('#geliBody');
+    const items = (r && r.items) ? r.items : [];
+    const mq = $('#mQuar'); if (mq) mq.textContent = String(items.length);
+    body.innerHTML = '';
+    if (!items.length) { body.innerHTML = '<div class="t-empty">隔离区暂无文件</div>'; return; }
+    items.forEach(function (it) { addRow('#geliBody', it.date || today(), it.path); });
+  });
+}
+
+(function () {
+  $('#geliAll').addEventListener('click', function () { toggleAll(this, '#geliBody'); });
+  $('#geliSearch').addEventListener('input', function () { filterRows('#geliBody', this.value); });
+
+  function checkedPaths() {
+    return getCheckedRows('#geliBody').map(function (r) {
+      const c = r.querySelectorAll('.r-col')[1];
+      return c ? c.textContent : '';
+    }).filter(Boolean);
+  }
+  bindSelect('geliSelect', function (v) {
+    const checked = getCheckedRows('#geliBody');
+    if (v === '新增文件' || v === '新增路径') {
+      dragonApi('dragon_select_path').then(function (p) {
+        const pe = dragonErr(p);
+        if (pe || !p) { if (pe) toast('选择失败：' + pe); return; }
+        const path = p.path || p;
+        dragonApi('dragon_quarantine_add', path).then(function (r) {
+          const err = dragonErr(r);
+          if (err) { toast('加入失败：' + err); return; }
+          loadQuarantine();
+          toast('已加入隔离区：' + basename(path));
+        });
+      });
+    } else if (v === '恢复') {
+      if (!checked.length) { toast('请先勾选要恢复的项目'); return; }
+      dragonApi('dragon_quarantine_restore', checkedPaths()).then(function (r) {
+        const err = dragonErr(r);
+        if (err) { toast('恢复失败：' + err); return; }
+        const n = (r && r.count != null) ? r.count : checked.length;
+        checked.forEach(function (row) { row.remove(); });
+        toast('已恢复 ' + n + ' 个项目');
+        loadQuarantine();
+      });
+    } else if (v === '删除') {
+      if (!checked.length) { toast('请先勾选要删除的项目'); return; }
+      dragonApi('dragon_quarantine_remove', checkedPaths()).then(function (r) {
+        const err = dragonErr(r);
+        if (err) { toast('删除失败：' + err); return; }
+        const n = (r && r.count != null) ? r.count : checked.length;
+        checked.forEach(function (row) { row.remove(); });
+        toast('已删除 ' + n + ' 个项目');
+        loadQuarantine();
+      });
+    } else if (v === '恢复并加入白名单') {
+      if (!checked.length) { toast('请先勾选要恢复并加白的项目'); return; }
+      dragonApi('dragon_quarantine_restore_to_trusted', checkedPaths()).then(function (r) {
+        const err = dragonErr(r);
+        if (err) { toast('操作失败：' + err); return; }
+        const n = (r && r.count != null) ? r.count : checked.length;
+        checked.forEach(function (row) { row.remove(); });
+        toast('已恢复并加入白名单 ' + n + ' 项');
+        loadQuarantine();
+        loadTrusted();
+      });
+    }
+  });
+})();
+
+function loadTrusted() {
+  dragonApi('dragon_trusted_list').then(function (r) {
+    const body = $('#xinrenBody');
+    const items = (r && r.items) ? r.items : [];
+    body.innerHTML = '';
+    if (!items.length) { body.innerHTML = '<div class="t-empty">白名单暂无文件</div>'; return; }
+    items.forEach(function (it) { addRow('#xinrenBody', it.date || today(), it.path); });
+  });
+}
+
+(function () {
+  $('#xinrenAll').addEventListener('click', function () { toggleAll(this, '#xinrenBody'); });
+  $('#xinrenSearch').addEventListener('input', function () { filterRows('#xinrenBody', this.value); });
+
+  function checkedPaths() {
+    return getCheckedRows('#xinrenBody').map(function (r) {
+      const c = r.querySelectorAll('.r-col')[1];
+      return c ? c.textContent : '';
+    }).filter(Boolean);
+  }
+  bindSelect('xinrenSelect', function (v) {
+    const checked = getCheckedRows('#xinrenBody');
+    if (v === '新增文件' || v === '新增路径') {
+      dragonApi('dragon_select_path').then(function (p) {
+        const pe = dragonErr(p);
+        if (pe || !p) { if (pe) toast('选择失败：' + pe); return; }
+        const path = p.path || p;
+        dragonApi('dragon_trusted_add', path).then(function (r) {
+          const err = dragonErr(r);
+          if (err) { toast('加入失败：' + err); return; }
+          loadTrusted();
+          toast('已加入白名单：' + basename(path));
+        });
+      });
+    } else if (v === '移除项目') {
+      if (!checked.length) { toast('请先勾选要移除的项目'); return; }
+      dragonApi('dragon_trusted_remove', checkedPaths()).then(function (r) {
+        const err = dragonErr(r);
+        if (err) { toast('移除失败：' + err); return; }
+        const n = (r && r.count != null) ? r.count : checked.length;
+        checked.forEach(function (row) { row.remove(); });
+        toast('已移除 ' + n + ' 个项目');
+        loadTrusted();
+      });
+    }
+  });
+})();
+
+function filterRows(bodySel, kw) {
+  kw = kw.trim().toLowerCase();
+  $(bodySel).querySelectorAll('.t-row').forEach(function (r) {
+    r.style.display = (!kw || r.textContent.toLowerCase().indexOf(kw) >= 0) ? '' : 'none';
+  });
+}
+
+function renderLogs(list) {
+  const body = $('#rizhiBody');
+  if (!list.length) { body.innerHTML = '<div class="t-empty">暂无日志记录</div>'; return; }
+  body.innerHTML = '';
+  list.forEach(function (r) {
+    const row = document.createElement('div');
+    row.className = 't-row';
+    row.innerHTML =
+      '<div class="r-col bold" style="flex:0 0 152px">' + esc(r.time || '') + '</div>' +
+      '<div class="r-col">' + esc(translateStr(r.event || '')) + '</div>' +
+      '<div class="r-col" style="flex:0 0 90px">' + esc(translateStr(r.result || '')) + '</div>';
+    const cols = row.querySelectorAll('.r-col');
+    cols[2].style.color = (r.result === '已处理' || r.result === '已隔离') ? 'var(--danger)' : 'var(--safe)';
+    body.appendChild(row);
+  });
+  const kw = ($('#rizhiSearch').value || '').trim();
+  if (kw) filterRows('#rizhiBody', kw);
+}
+
+function loadLogs() {
+  dragonApi('dragon_log_list').then(function (r) {
+    renderLogs((r && r.items) ? r.items : []);
+  });
+}
+
+function appendLogRow(d) {
+  const body = $('#rizhiBody');
+  if (!body) return;
+  const empty = body.querySelector('.t-empty');
+  if (empty) empty.remove();
+  const row = document.createElement('div');
+  row.className = 't-row';
+  row.innerHTML =
+    '<div class="r-col bold" style="flex:0 0 152px">' + esc(d.time || '') + '</div>' +
+    '<div class="r-col">' + esc(translateStr(d.event || '')) + '</div>' +
+    '<div class="r-col" style="flex:0 0 90px">' + esc(translateStr(d.result || '')) + '</div>';
+  const cols = row.querySelectorAll('.r-col');
+  cols[2].style.color = (d.result === '已处理' || d.result === '已隔离') ? 'var(--danger)' : 'var(--safe)';
+  body.insertBefore(row, body.firstChild);
+}
+
+$('#rizhiSearch').addEventListener('input', function () { filterRows('#rizhiBody', this.value); });
+
+function fmtSize(b) {
+  b = Number(b) || 0;
+  if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+  if (b >= 1048576) return (b / 1048576).toFixed(0) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+  return b + ' B';
+}
+(function () {
+  function bindChecks() {
+    $('#qingliList').querySelectorAll('.chk-item .cb').forEach(function (c) {
+      c.addEventListener('click', function () { c.classList.toggle('on'); });
+    });
+  }
+  window.loadClean = function () {
+    dragonApi('dragon_clean_scan').then(function (r) {
+    const list = $('#qingliList');
+    const items = (r && r.items) ? r.items : [];
+    list.innerHTML = '';
+    if (!items.length) {
+      list.innerHTML = '<div class="t-empty">没有可清理的项目</div>';
+      $('#qingliAll').style.display = 'none';
+      return;
+    }
+    items.forEach(function (it) {
+      const d = document.createElement('div');
+      d.className = 'chk-item';
+      d.innerHTML = '<span class="cb on"></span><span class="nm">' + esc(it.name) + '</span><span class="sz">' + fmtSize(it.size) + '</span>';
+      list.appendChild(d);
+    });
+    bindChecks();
+    });
+  };
+  $('#qingliAll').addEventListener('click', function () {
+    const allOn = Array.prototype.every.call($('#qingliList').querySelectorAll('.chk-item .cb'), function (c) { return c.classList.contains('on'); });
+    $('#qingliList').querySelectorAll('.chk-item .cb').forEach(function (c) { c.classList.toggle('on', !allOn); });
+  });
+  $('#qingliGo').addEventListener('click', function () {
+    const btn = this;
+    const items = Array.prototype.slice.call($('#qingliList').querySelectorAll('.chk-item'));
+    const checked = items.filter(function (it) { return it.querySelector('.cb').classList.contains('on'); });
+    if (!checked.length) { toast('请先勾选要清理的项目'); return; }
+    const names = checked.map(function (it) { return it.querySelector('.nm').textContent; });
+    btn.disabled = true;
+    btn.textContent = '清理中…';
+    dragonApi('dragon_clean_run', names).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = '开始清理';
+      const err = dragonErr(r);
+      if (err) { toast('清理出错：' + err); return; }
+      const freed = fmtSize((r && r.freedBytes) ? r.freedBytes : 0);
+      checked.forEach(function (it) { it.remove(); });
+      if (!$('#qingliList').querySelectorAll('.chk-item').length) {
+        $('#qingliList').innerHTML = '<div class="t-empty">系统已清理干净，共释放 ' + freed + ' 空间</div>';
+        $('#qingliAll').style.display = 'none';
+      }
+      toast('清理完成，已释放 ' + freed);
+    });
+  });
+})();
+
+(function () {
+  window.loadRepair = function () {
+    dragonApi('dragon_repair_list').then(function (r) {
+    const list = $('#xiufuList');
+    const items = (r && r.items) ? r.items : [];
+    list.innerHTML = '';
+    if (!items.length) { list.innerHTML = '<div class="t-empty">系统状态良好，没有需要修复的项目</div>'; return; }
+    items.forEach(function (it) {
+      const d = document.createElement('div');
+      d.className = 'chk-item';
+      d.innerHTML = '<span class="cb' + (it.abnormal ? ' on' : '') + '"></span><span class="nm">' + esc(it.name) + '</span><span class="sz">' + esc(it.abnormal ? '异常' : '正常') + '</span>';
+      if (it.abnormal) d.querySelector('.sz').style.color = 'var(--danger)';
+      list.appendChild(d);
+    });
+    list.querySelectorAll('.chk-item .cb').forEach(function (c) {
+      c.addEventListener('click', function () { c.classList.toggle('on'); });
+    });
+    });
+  };
+  $('#xiufuGo').addEventListener('click', function () {
+    const btn = this;
+    const items = Array.prototype.slice.call($('#xiufuList').querySelectorAll('.chk-item'));
+    const checked = items.filter(function (it) { return it.querySelector('.cb').classList.contains('on'); });
+    if (!checked.length) { toast('没有需要修复的异常项'); return; }
+    const names = checked.map(function (it) { return it.querySelector('.nm').textContent; });
+    btn.disabled = true;
+    btn.textContent = '修复中…';
+    dragonApi('dragon_repair_run', names).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = '立即修复';
+      const err = dragonErr(r);
+      if (err) { toast('修复出错：' + err); return; }
+      checked.forEach(function (it) {
+        it.querySelector('.cb').classList.remove('on');
+        it.querySelector('.sz').textContent = '已修复';
+        it.querySelector('.sz').style.color = 'var(--safe)';
+        it.classList.add('done');
+      });
+      toast('已修复 ' + checked.length + ' 个异常项');
+    });
+  });
+})();
+
+function bindSwitchList(listId, hintId, getApi, setApi) {
+  const list = $('#' + listId);
+  function bindSwitch(sw, name) {
+    sw.setAttribute('data-list-sw', '');
+    sw.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sw.classList.toggle('on');
+      const on = sw.classList.contains('on');
+      toast(name + '：' + (on ? '已启用' : '已禁用'));
+      dragonApi(setApi, name, on).then(function (r) {
+        const err = dragonErr(r);
+        if (err) {
+          sw.classList.toggle('on', !on);
+          toast('设置失败：' + err);
+        }
+        updateHint(listId, hintId);
+      });
+    });
+  }
+  dragonApi(getApi).then(function (r) {
+    const items = (r && r.items) ? r.items : [];
+    list.innerHTML = '';
+    if (!items.length) {
+      list.innerHTML = '<div class="t-empty">暂无可管理项目</div>';
+      updateHint(listId, hintId);
+      return;
+    }
+    items.forEach(function (it) {
+      const d = document.createElement('div');
+      d.className = 'chk-item';
+      d.innerHTML = '<span class="nm">' + esc(it.name) + '<label class="sub">' + esc(it.command || it.menu || '') + '</label></span><div class="switch sm' + (it.enabled ? ' on' : '') + '"><div class="knob"></div></div>';
+      bindSwitch(d.querySelector('.switch'), it.name);
+      list.appendChild(d);
+    });
+    updateHint(listId, hintId);
+  });
+}
+function updateHint(listId, hintId) {
+  const list = $('#' + listId);
+  const onN = list.querySelectorAll('.switch.on').length;
+  const total = list.querySelectorAll('.switch').length;
+  const h = $('#' + hintId);
+  h.dataset.origText = '共 ' + total + ' 项，已启用 ' + onN + ' 项';
+  h.textContent = translateStr(h.dataset.origText);
+}
+function loadToolLists() {
+  bindSwitchList('qidongList', 'qidongHint', 'dragon_startup_list', 'dragon_startup_set');
+  bindSwitchList('youjianList', 'youjianHint', 'dragon_contextmenu_list', 'dragon_contextmenu_set');
+}
+
+(function () {
+  const list = $('#fensuiList');
+  const files = [];
+  function render() {
+    list.innerHTML = '';
+    files.forEach(function (f) {
+      const d = document.createElement('div');
+      d.className = 'chk-item';
+      d.innerHTML = '<span class="nm">' + esc(basename(f)) + '</span><span class="sub">' + esc(f) + '</span><span class="sz" style="min-width:auto">待粉碎</span>';
+      list.appendChild(d);
+    });
+  }
+  $('#fensuiDrop').addEventListener('click', function () {
+    dragonApi('dragon_select_files').then(function (r) {
+      const err = dragonErr(r);
+      if (err) { toast('选择失败：' + err); return; }
+      const picked = (r && r.paths) ? r.paths : (r && r.path ? [r.path] : []);
+      if (!picked.length) return;
+      picked.forEach(function (p) { if (files.indexOf(p) < 0) files.push(p); });
+      render();
+      toast('已添加 ' + picked.length + ' 个文件');
+    });
+  });
+  $('#fensuiGo').addEventListener('click', function () {
+    if (!files.length) { toast('请先添加要粉碎的文件'); return; }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = '粉碎中…';
+    dragonApi('dragon_shred_files', files.slice()).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = '立即粉碎';
+      const err = dragonErr(r);
+      if (err) { toast('粉碎出错：' + err); return; }
+      list.querySelectorAll('.chk-item').forEach(function (it) {
+        it.querySelector('.sz').textContent = '已粉碎';
+        it.querySelector('.sz').style.color = 'var(--danger)';
+        it.classList.add('done');
+      });
+      toast('已粉碎 ' + files.length + ' 个文件，不可恢复');
+      files.length = 0;
+    });
+  });
+  $('#fensuiClear').addEventListener('click', function () {
+    list.innerHTML = '';
+    files.length = 0;
+    toast('列表已清空');
+  });
+})();
+
+function bindLangList(listSel) {
+  $(listSel).querySelectorAll('.lang-item, .lang-pill').forEach(function (it) {
+    it.classList.toggle('active', it.dataset.lang === curLang);
+    it.addEventListener('click', function () {
+      document.querySelectorAll('.lang-item, .lang-pill').forEach(function (x) { x.classList.remove('active'); });
+      it.classList.add('active');
+      applyLang(it.dataset.lang);
+      toast(translateStr('界面语言：') + it.dataset.lang);
+    });
+  });
+}
+bindLangList('#langList');
+bindLangList('#settingsLangList');
+
+/* ================= 主题色 ================= */
+const THEME_MAP = {
+  orange: { brand:'#ff6a00', hi:'#ff7d1f', soft:'#fff1e6' },
+  blue:   { brand:'#1a6bff', hi:'#4d8dff', soft:'#eaf1ff' },
+  green:  { brand:'#1fab6b', hi:'#3fc08a', soft:'#e6f7ef' },
+  purple: { brand:'#8b5cf6', hi:'#a78bfa', soft:'#f1ebff' },
+  cyan:   { brand:'#06b6d4', hi:'#38cfe2', soft:'#e1f7fb' }
+};
+function applyTheme(name) {
+  const t = THEME_MAP[name] || THEME_MAP.orange;
+  const rs = document.documentElement.style;
+  rs.setProperty('--brand', t.brand);
+  rs.setProperty('--brand-hi', t.hi);
+  rs.setProperty('--brand-soft', t.soft);
+  document.querySelectorAll('#settingsThemeList .lang-pill').forEach(function (p) {
+    p.classList.toggle('active', p.dataset.theme === (THEME_MAP[name] ? name : 'orange'));
+  });
+}
+(function () {
+  const list = document.getElementById('settingsThemeList');
+  if (!list) return;
+  list.querySelectorAll('.lang-pill').forEach(function (p) {
+    p.addEventListener('click', function () {
+      const name = p.dataset.theme;
+      applyTheme(name);
+      dragonApi('dragon_theme_set', name);
+      toast(translateStr('主题色：') + p.textContent.trim());
+    });
+  });
+})();
+
+document.querySelectorAll('.lang-item, .lang-pill').forEach(function (it) {
+  it.addEventListener('click', function () {
+    dragonApi('dragon_lang_set', it.dataset.lang);
+    document.querySelectorAll('.lang-pill[data-lang]').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.lang === it.dataset.lang);
+    });
+  });
+});
+</script>
+</body>
+</html>

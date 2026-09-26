@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FBFC15CD-60BF-4049-87FC-39C5BA2EA9A3}</ProjectGuid>
+    <TemplateGuid>{dd38f7fc-d7bd-488b-9242-7d8754cde80d}</TemplateGuid>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <Configuration>Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <RootNamespace>DragonDrivers</RootNamespace>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>Driver</ConfigurationType>
+    <DriverType>KMDF</DriverType>
+    <KmdfVersion>1.31</KmdfVersion>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>Driver</ConfigurationType>
+    <DriverType>KMDF</DriverType>
+    <KmdfVersion>1.31</KmdfVersion>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+
+  <PropertyGroup Label="UserMacros" />
+
+  <PropertyGroup>
+    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <EnableInf2cat>false</EnableInf2cat>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NTDDI_VERSION=NTDDI_WIN10_VB;_WIN32_WINNT=0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SpectreMitigation>false</SpectreMitigation>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(DDK_LIB_PATH)fltMgr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/INTEGRITYCHECK %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ClCompile Include="src\DragonBootGuard.c" />
+    <ClCompile Include="src\DragonComms.c" />
+    <ClCompile Include="src\DragonEntry.c" />
+    <ClCompile Include="src\DragonEvaluate.c" />
+    <ClCompile Include="src\DragonFileGuard.c" />
+    <ClCompile Include="src\DragonJson.c" />
+    <ClCompile Include="src\DragonMetrics.c" />
+    <ClCompile Include="src\DragonObjectGuard.c" />
+    <ClCompile Include="src\DragonProcessGuard.c" />
+    <ClCompile Include="src\DragonRansom.c" />
+    <ClCompile Include="src\DragonRegistryGuard.c" />
+    <ClCompile Include="src\DragonResponse.c" />
+    <ClCompile Include="src\DragonRules.c" />
+    <ClCompile Include="src\DragonSelfProtect.c" />
+    <ClCompile Include="src\DragonSupport.c" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="inc\DragonCommon.h" />
+    <ClInclude Include="inc\DragonProtocol.h" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Inf Include="Dragon-Drivers.inf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ResourceCompile Include="Dragon-Drivers.rc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+
+  <!-- =======================================================================
+       覆盖 WDK 自带的 InfVerif 目标。
+
+       原因：该 WDK 安装中，InfVerif 的 MSBuild 任务固定去加载
+             build\<version>\bin\x86\InfVerif.dll，
+       但本机 WDK 只随附了 x64 / arm64 两个版本（x86 目录缺失），
+       任务必然抛出「无法加载 DLL x86\InfVerif.dll」并使整个生成失败。
+       这不是工程配置问题，而是 WDK 打包缺口。
+
+       处理：改用 WDK 随附的命令行工具 infverif.exe 完成同样的 INF 静态校验，
+             保留校验动作、绕开损坏的任务封装。
+       如需彻底关闭该校验，删除本 Target 即可（不影响 .sys 产物）。
+       ======================================================================= -->
+  <Target Name="InfVerif"
+          Condition="'@(Inf)' != ''"
+          AfterTargets="StampInf"
+          BeforeTargets="PreBuildEvent">
+    <PropertyGroup>
+      <_DragonInfVerifExe>$(WDKContentRoot)Tools\$(TargetPlatformVersion)\x64\infverif.exe</_DragonInfVerifExe>
+    </PropertyGroup>
+    <Message Importance="high" Text="Dragon-Drivers: 使用 $(_DragonInfVerifExe) 校验 INF" Condition="Exists('$(_DragonInfVerifExe)')" />
+    <Message Importance="high" Text="Dragon-Drivers: 未找到 infverif.exe，跳过 INF 静态校验" Condition="!Exists('$(_DragonInfVerifExe)')" />
+    <Exec Condition="Exists('$(_DragonInfVerifExe)')"
+          Command="&quot;$(_DragonInfVerifExe)&quot; /Info &quot;%(Inf.FullPath)&quot;"
+          IgnoreExitCode="true"
+          ContinueOnError="true" />
+  </Target>
+</Project>

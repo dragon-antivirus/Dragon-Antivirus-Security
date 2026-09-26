@@ -1,0 +1,83 @@
+; =============================================================================
+;  Dragon-Drivers.inf
+;
+;  天龙神盾 内核防护驱动（Filter Manager 微过滤器）
+;
+;  加载顺序组 / 高度：
+;    FSFilter Activity Monitor 组，Altitude = 328900
+;    （与参考实现刻意错开，避免同一分组内的顺序冲突）
+;
+;  通信端口授权依赖 Parameters 下的 ClientImagePath：
+;    · 未配置时驱动仍会正常启动并在内核侧执行规则；
+;    · 但通信端口会拒绝一切连接（见 DragonComms.c 授权逻辑）。
+;    该值必须在驱动启动前写入，通常由安装程序在创建服务后写入。
+; =============================================================================
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = "ActivityMonitor"
+ClassGuid   = {b86dff51-a31e-4bac-b3cf-e8cfe75c9fc2}
+Provider    = %ManufacturerName%
+DriverVer   = 09/15/2026,1.0.0.0
+; 未做 WHQL / 微软目录签名，CatalogFile 必须留空。
+; 官方说明：CatalogFile 只用于「已签名的反病毒微过滤器」填写 WHQL 提供的目录文件名，
+; 其余微过滤器驱动应留空；填了不存在的 .cat 会让 InstallHinfSection 直接失败。
+CatalogFile =
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir              = 12
+DragonDrivers.DriverFiles   = 12
+DragonDrivers.RuleFiles     = 12,Rules
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+Dragon-Drivers.sys = 1,,
+DragonDriver_DefenderRules.json = 1,,
+
+[DefaultInstall.NTamd64]
+OptionDesc = %ServiceDescription%
+CopyFiles  = DragonDrivers.DriverFiles,DragonDrivers.RuleFiles
+
+[DefaultInstall.NTamd64.Services]
+AddService = %ServiceName%,,DragonDrivers.Service
+
+[DragonDrivers.DriverFiles]
+Dragon-Drivers.sys
+
+[DragonDrivers.RuleFiles]
+DragonDriver_DefenderRules.json
+
+[DragonDrivers.Service]
+DisplayName      = %ServiceName%
+Description      = %ServiceDescription%
+ServiceBinary    = %12%\Dragon-Drivers.sys
+Dependencies     = FltMgr
+ServiceType      = 2
+StartType        = 3
+ErrorControl     = 1
+LoadOrderGroup   = "FSFilter Activity Monitor"
+AddReg           = DragonDrivers.AddReg
+
+[DragonDrivers.AddReg]
+HKR,"Parameters","DebugFlags",0x00010001,0x0
+HKR,"Parameters","SupportedFeatures",0x00010001,0x3
+HKR,"Parameters","ClientImagePath",0x00000000,""
+; 实例注册位置随操作系统版本变化（官方说明）：
+;   · Windows 11 24H2 起：Parameters\Instances\...
+;   · Windows 11 23H2 及更早：Instances\...
+; 两处同时写入，FltMgr 会读取它自己那一套；多余的一处被忽略，不影响加载。
+HKR,"Parameters\Instances","DefaultInstance",0x00000000,"Dragon Instance"
+HKR,"Parameters\Instances\Dragon Instance","Altitude",0x00000000,"328900"
+HKR,"Parameters\Instances\Dragon Instance","Flags",0x00010001,0x0
+HKR,"Instances","DefaultInstance",0x00000000,"Dragon Instance"
+HKR,"Instances\Dragon Instance","Altitude",0x00000000,"328900"
+HKR,"Instances\Dragon Instance","Flags",0x00010001,0x0
+
+[Strings]
+ManufacturerName   = "Dragon Security"
+DiskName           = "Dragon-Drivers Source Disk"
+ServiceName        = "Dragon-Drivers"
+ServiceDescription = "Dragon Security Kernel Guard Driver"

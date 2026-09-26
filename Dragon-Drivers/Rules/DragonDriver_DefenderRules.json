@@ -1,0 +1,950 @@
+{
+  "SchemaVersion": 2,
+  "Description": "天龙神盾 内核防护驱动（Dragon-Drivers）自写防护规则集。本文件为独立编写的规则定义，只描述「什么行为该被拦」，不包含任何第三方产品的规则内容；字段语义见 inc/DragonProtocol.h 与交付说明.md。处置动作分两级，判据是「误杀代价」而不是「危险程度」——危险行为一律拦截，是否再杀掉发起进程则取决于该行为在正常软件里是否常见。Terminate（20 条）：一旦成功即造成不可逆损害、或直接削弱整机与本产品防线的行为 —— 攻击本产品组件、关闭安全中心、删除卷影与还原点、清除事件日志、篡改引导链、向内核驱动目录投放文件、注册 LSA 安全包、劫持 Winlogon / IFEO / AppInit、向系统关键进程注入或窃取令牌；这类行为正常软件不会做，误杀面极小。Report（17 条）：合法软件同样会做的动作 —— 自启动项与服务键写入、COM 注册、hosts 与代理配置、计划任务、启动文件夹、可写目录执行、LOLBin 携远程参数、脚本隐藏执行、账户与终端服务操作；命中一律拒绝执行，拦下动作本身已经达到防护目的，只不终止发起进程，避免把正常的安装器、运维脚本、备份与磁盘工具一起杀掉。文件由驱动启动时从镜像目录下的 Rules\\ 子目录自动加载；用户态可用 FilterSendMessage(Command=3) 追加其它规则文件，用 Command=4 清空动态规则 —— 清空只影响本文件定义的动态规则，内置自保护（驱动镜像 / 规则目录 / 服务键 / 主程序与外置文件 / 客户端进程）是编译期固化的，不受影响。注册表规则除了 Target 的键路径通配符之外，还可以用 ValueNames 声明「值名」约束（两者必须同时命中）——键路径回答「哪个键被碰」，ValueNames 回答「哪个值被改」。例如 UAC 策略只在 EnableLUA / ConsentPromptBehaviorAdmin 这些具体值被改写时才判定命中，避免整键拦截造成误报。",
+  "DynamicRules": [
+    {
+      "Code": 1001,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "驱动镜像与防护规则文件：内置自保护已硬编码拦截，本规则用于产生事件记录。",
+      "Priority": 100,
+      "Category": "File",
+      "Operations": [
+        "Write",
+        "Delete",
+        "Rename",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\System32\\drivers\\Dragon-Drivers.sys",
+        "*\\System32\\drivers\\Rules\\*",
+        "*\\Rules\\DragonDriver_DefenderRules.json"
+      ]
+    },
+    {
+      "Code": 1002,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "驱动服务注册表键：内置自保护已拦截（含子键），本规则用于产生事件记录。",
+      "Priority": 100,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Services\\Dragon-Drivers*"
+      ]
+    },
+    {
+      "Code": 1003,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "主程序与主程序外置脚本被改写：主程序文件被替换通常意味着产品被篡改或降级攻击。",
+      "Priority": 95,
+      "Category": "File",
+      "Operations": [
+        "Write",
+        "Delete",
+        "Rename",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Dragon-Antivirus.exe",
+        "*\\Dragon_Antivirus.py",
+        "*\\Dragon_Engine.py",
+        "*\\Dragon_PEfeature.py",
+        "*\\Dragon_Tools.py",
+        "*\\Dragon_scanner.py",
+        "*\\Dragon_UI.html"
+      ]
+    },
+    {
+      "Code": 1004,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "主程序数据、模型与规则库被改写：AIModels / HashDB / Yararules 被替换会直接削弱检测能力。",
+      "Priority": 90,
+      "Category": "File",
+      "Operations": [
+        "Write",
+        "Delete",
+        "Rename",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\DragonAIModels\\*",
+        "*\\HashDB\\*",
+        "*\\Yararules\\*"
+      ]
+    },
+    {
+      "Code": 1005,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "命令行停用或删除本产品防护服务：属于对防护能力的直接对抗，一旦成功整机失去防护。",
+      "Priority": 100,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\sc.exe",
+        "*\\net.exe",
+        "*\\net1.exe",
+        "*\\fltmc.exe",
+        "*\\reg.exe",
+        "*\\cmd.exe",
+        "*\\powershell.exe",
+        "*\\pwsh.exe"
+      ],
+      "CommandLine": [
+        "*sc delete Dragon-Drivers*",
+        "*sc stop Dragon-Drivers*",
+        "*sc config Dragon-Drivers*",
+        "*net stop Dragon-Drivers*",
+        "*fltmc unload Dragon-Drivers*",
+        "*delete Dragon-Drivers*"
+      ]
+    },
+    {
+      "Code": 1010,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "关闭或篡改 Windows Defender / 安全中心：成功即让整机失去最后一道防线，且是勒索软件的标准前置动作。",
+      "Priority": 100,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Microsoft\\Windows Defender\\*",
+        "*\\Policies\\Microsoft\\Windows Defender\\*",
+        "*\\Microsoft\\Security Center\\*",
+        "*\\Security Center\\*",
+        "*\\Policies\\Microsoft\\Windows Defender Security Center\\*"
+      ]
+    },
+    {
+      "Code": 1011,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "删除卷影副本 / 备份目录 / 关闭恢复环境：抹掉受害者最后的恢复手段，是勒索软件加密前的固定动作。",
+      "Priority": 100,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\vssadmin.exe",
+        "*\\wmic.exe",
+        "*\\wbadmin.exe",
+        "*\\bcdedit.exe",
+        "*\\cmd.exe",
+        "*\\powershell.exe",
+        "*\\pwsh.exe"
+      ],
+      "CommandLine": [
+        "*vssadmin*delete*shadows*",
+        "*wmic*shadowcopy*delete*",
+        "*wbadmin*delete*catalog*",
+        "*wbadmin*delete*backup*",
+        "*bcdedit*/set*recoveryenabled*no*",
+        "*bcdedit*/set*bootstatuspolicy*ignoreallfailures*",
+        "*delete systemstatebackup*"
+      ]
+    },
+    {
+      "Code": 1012,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "裸磁盘 / 分区改写：擦盘不可逆，必须拦截；但合法分区与镜像工具同样会发这类 IOCTL，直接终止会把磁盘留在半写状态，因此只拦不杀。System32 下的系统工具放行。",
+      "Priority": 100,
+      "Category": "Device",
+      "Operations": [
+        "Ioctl"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\System32\\*",
+        "*\\SysWOW64\\*",
+        "*\\Dragon-Drivers.sys"
+      ]
+    },
+    {
+      "Code": 1020,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "自启动项写入：最常见的持久化位置。",
+      "Priority": 95,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\CurrentVersion\\Run",
+        "*\\CurrentVersion\\RunOnce",
+        "*\\CurrentVersion\\Run*",
+        "*\\CurrentVersion\\RunOnce*",
+        "*\\Explorer\\Run",
+        "*\\Policies\\Explorer\\Run",
+        "*\\Explorer\\Run*"
+      ]
+    },
+    {
+      "Code": 1021,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "Winlogon 劫持：改 Shell / Userinit / Notify 可在每次登录时执行任意程序。",
+      "Priority": 95,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\*"
+      ]
+    },
+    {
+      "Code": 1022,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "映像劫持（IFEO Debugger / SilentProcessExit）：让目标程序启动时改跑攻击者的程序。",
+      "Priority": 95,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Image File Execution Options\\*",
+        "*\\SilentProcessExit\\*"
+      ]
+    },
+    {
+      "Code": 1023,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "AppInit_DLLs / AppCertDlls 注入：向所有加载 user32 或调用进程创建 API 的进程注入 DLL。",
+      "Priority": 95,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Windows\\AppInit_DLLs",
+        "*\\Windows\\AppCertDlls",
+        "*\\AppInit_DLLs*"
+      ]
+    },
+    {
+      "Code": 1024,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "服务关键值被改写：Start / ImagePath / ServiceDll / FailureCommand 是服务后门与提权（任意 DLL 以 SYSTEM 加载）的落点。只针对具体值名，避免把正常安装服务刷屏。",
+      "Priority": 90,
+      "Category": "Registry",
+      "Operations": [
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Services\\*\\Start",
+        "*\\Services\\*\\ImagePath",
+        "*\\Services\\*\\ServiceDll",
+        "*\\Services\\*\\FailureCommand",
+        "*\\Services\\*\\ObjectName",
+        "*\\Services\\*\\Type"
+      ]
+    },
+    {
+      "Code": 1025,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "COM 组件劫持：改 InprocServer32 / LocalServer32 可在宿主进程内执行任意 DLL。",
+      "Priority": 85,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\InprocServer32\\*",
+        "*\\LocalServer32\\*",
+        "*\\InprocServer32",
+        "*\\LocalServer32"
+      ]
+    },
+    {
+      "Code": 1026,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "登录脚本与组策略脚本：开机 / 登录脚本目录被改写可在系统级执行任意命令。",
+      "Priority": 85,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Policies\\System\\Scripts\\*",
+        "*\\CurrentVersion\\Group Policy\\*",
+        "*\\Microsoft\\Windows\\CurrentVersion\\Group Policy\\*"
+      ]
+    },
+    {
+      "Code": 1027,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "防火墙与网络配置被改写：放行入站、关闭防火墙或改 DNS，通常用于打通回连与劫持流量。",
+      "Priority": 90,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Policies\\Microsoft\\WindowsFirewall\\*",
+        "*\\SharedAccess\\Parameters\\FirewallPolicy\\*",
+        "*\\Tcpip\\Parameters\\NameServer",
+        "*\\Tcpip\\Parameters\\Interfaces\\*\\NameServer",
+        "*\\Services\\Tcpip\\Parameters\\*",
+        "*\\Internet Settings\\ProxyServer",
+        "*\\Internet Settings\\AutoConfigURL",
+        "*\\Internet Settings\\ProxyEnable"
+      ]
+    },
+    {
+      "Code": 1028,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "LSA 安全包与凭据相关键被改写：向 LSA 注册恶意安全包可拿到进程内的明文凭据。",
+      "Priority": 95,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Control\\Lsa\\Authentication Packages",
+        "*\\Control\\Lsa\\Security Packages",
+        "*\\Control\\Lsa\\Notification Packages",
+        "*\\Control\\Lsa\\OSConfig\\*"
+      ]
+    },
+    {
+      "Code": 1029,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "hosts 文件改写：用于屏蔽安全软件更新域名或劫持指定站点。",
+      "Priority": 90,
+      "Category": "File",
+      "Operations": [
+        "Write",
+        "Delete",
+        "Rename",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\drivers\\etc\\hosts",
+        "*\\etc\\hosts"
+      ]
+    },
+    {
+      "Code": 1030,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "计划任务定义文件被改写：任务定义直接落在磁盘上，改它比用 schtasks 更隐蔽。",
+      "Priority": 85,
+      "Category": "File",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete",
+        "Rename"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\System32\\Tasks\\*",
+        "*\\System32\\Tasks"
+      ]
+    },
+    {
+      "Code": 1031,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "启动文件夹被写入或删除：无注册表痕迹的持久化位置。",
+      "Priority": 85,
+      "Category": "File",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete",
+        "Rename"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Start Menu\\Programs\\Startup\\*",
+        "*\\Start Menu\\Programs\\StartUp\\*"
+      ]
+    },
+    {
+      "Code": 1032,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "向内核驱动目录投放文件：驱动是最高权限执行体，用户进程往这里放 .sys 需要重点核查。",
+      "Priority": 95,
+      "Category": "File",
+      "Operations": [
+        "Create",
+        "Write",
+        "Rename"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\System32\\drivers\\*.sys",
+        "*\\System32\\drivers\\*.dll"
+      ]
+    },
+    {
+      "Code": 1033,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "引导配置与 EFI 分区被改写：引导链被篡改后可在系统启动前加载任意代码（Bootkit）。",
+      "Priority": 100,
+      "Category": "File",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete",
+        "Rename",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\EFI\\Microsoft\\Boot\\*",
+        "*\\Boot\\BCD",
+        "*\\Windows\\Boot\\*",
+        "*\\System32\\config\\BCD*"
+      ]
+    },
+    {
+      "Code": 1034,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "系统还原点存储被删改：与卷影备份删除同源，属于抹掉恢复手段的动作。",
+      "Priority": 85,
+      "Category": "File",
+      "Operations": [
+        "Delete",
+        "Write",
+        "Create"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\System Volume Information\\*"
+      ]
+    },
+    {
+      "Code": 1035,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "可写目录中的映像被加载：临时目录 / 下载目录 / 公共目录是落地执行的常见位置。",
+      "Priority": 80,
+      "Category": "Process",
+      "Operations": [
+        "ImageLoad"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\AppData\\Local\\Temp\\*",
+        "*\\Windows\\Temp\\*",
+        "*\\Downloads\\*",
+        "*\\Users\\Public\\*",
+        "*\\$Recycle.Bin\\*"
+      ]
+    },
+    {
+      "Code": 1036,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "系统自带程序携远程地址或编码参数：rundll32 / mshta / regsvr32 / certutil 等被当作下载器或脚本宿主使用，是无文件攻击的典型手法。",
+      "Priority": 90,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\rundll32.exe",
+        "*\\regsvr32.exe",
+        "*\\mshta.exe",
+        "*\\certutil.exe",
+        "*\\bitsadmin.exe",
+        "*\\installutil.exe",
+        "*\\regasm.exe",
+        "*\\msbuild.exe",
+        "*\\wmic.exe",
+        "*\\hh.exe",
+        "*\\pcalua.exe",
+        "*\\forfiles.exe"
+      ],
+      "CommandLine": [
+        "*http://*",
+        "*https://*",
+        "*-enc*",
+        "*-encodedcommand*",
+        "*FromBase64String*",
+        "*javascript:*",
+        "*vbscript:*",
+        "*scrobj.dll*",
+        "*ftp://*"
+      ]
+    },
+    {
+      "Code": 1037,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "脚本引擎隐藏窗口 / 编码执行：绕过日志与人工审计的常规姿势。",
+      "Priority": 85,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\powershell.exe",
+        "*\\pwsh.exe",
+        "*\\wscript.exe",
+        "*\\cscript.exe"
+      ],
+      "CommandLine": [
+        "*-whidden*",
+        "*-windowstyle*hidden*",
+        "*-nop*",
+        "*-noprofile*",
+        "*-executionpolicy*bypass*",
+        "*-enc *",
+        "*downloadstring*",
+        "*downloadfile*",
+        "*invoke-expression*",
+        "*iex(*",
+        "*-w hidden*"
+      ]
+    },
+    {
+      "Code": 1038,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "从公共或归档目录加载映像：这些位置任何用户都可写，常被用作落地目录。",
+      "Priority": 75,
+      "Category": "Process",
+      "Operations": [
+        "ImageLoad"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\ProgramData\\*",
+        "*\\Users\\Public\\*",
+        "*\\Windows\\Temp\\*"
+      ],
+      "InitiatorExclude": [
+        "*\\System32\\*",
+        "*\\SysWOW64\\*"
+      ]
+    },
+    {
+      "Code": 1039,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "计划任务与账户操作命令：schtasks / net user 常被用于批量横向与提权。",
+      "Priority": 90,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\schtasks.exe",
+        "*\\at.exe",
+        "*\\net.exe",
+        "*\\net1.exe",
+        "*\\reg.exe",
+        "*\\sc.exe"
+      ],
+      "CommandLine": [
+        "*/create*",
+        "*\\/add*",
+        "*localgroup*administrators*",
+        "*user*password*"
+      ]
+    },
+    {
+      "Code": 1040,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "向系统关键进程写入内存或在其内部创建线程：正常软件不需要这么做，是注入与凭据窃取的核心特征。",
+      "Priority": 95,
+      "Category": "Memory",
+      "Operations": [
+        "VmWrite",
+        "VmOperation",
+        "CreateThread",
+        "CreateRemoteThread",
+        "WriteMemory"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\System32\\*",
+        "*\\SysWOW64\\*",
+        "*\\Dragon-Drivers.sys"
+      ],
+      "Target": [
+        "*\\lsass.exe",
+        "*\\winlogon.exe",
+        "*\\services.exe",
+        "*\\csrss.exe",
+        "*\\smss.exe",
+        "*\\svchost.exe"
+      ],
+      "HandleTypes": [
+        "Create",
+        "Duplicate"
+      ],
+      "ObjectTypes": [
+        "Process"
+      ],
+      "MinimumRiskScore": 35,
+      "Threshold": 5,
+      "TimeWindow": 3000
+    },
+    {
+      "Code": 1041,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "对系统关键进程申请终止 / SuspendResume / 复制句柄 / 改配额：停掉或劫持安全进程是攻击链的一环。",
+      "Priority": 90,
+      "Category": "Memory",
+      "Operations": [
+        "Terminate",
+        "SuspendResume",
+        "DuplicateHandle",
+        "SetInformation"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\Dragon-Drivers.sys"
+      ],
+      "Target": [
+        "*\\lsass.exe",
+        "*\\winlogon.exe",
+        "*\\services.exe",
+        "*\\csrss.exe",
+        "*\\smss.exe"
+      ],
+      "HandleTypes": [
+        "Create",
+        "Duplicate"
+      ],
+      "ObjectTypes": [
+        "Process"
+      ]
+    },
+    {
+      "Code": 1042,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "改写线程上下文或窃取线程令牌：进程镂空（hollowing）与令牌窃取的直接特征。",
+      "Priority": 95,
+      "Category": "Memory",
+      "Operations": [
+        "SetThreadContext",
+        "SetThreadToken",
+        "Impersonate"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\Dragon-Drivers.sys"
+      ],
+      "Target": [
+        "*\\lsass.exe",
+        "*\\winlogon.exe",
+        "*\\services.exe",
+        "*\\csrss.exe",
+        "*\\smss.exe"
+      ],
+      "ObjectTypes": [
+        "Thread",
+        "Process"
+      ]
+    },
+    {
+      "Code": 1043,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "跨进程线程起始地址落在私有可执行内存：教科书式的远程线程注入。",
+      "Priority": 90,
+      "Category": "Thread",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\System32\\*",
+        "*\\SysWOW64\\*",
+        "*\\Dragon-Drivers.sys"
+      ],
+      "TargetExclude": [
+        "*\\Dragon-Drivers.sys"
+      ],
+      "ThreadMemoryTypes": [
+        "Private"
+      ],
+      "ThreadMemoryProtections": [
+        "ExecuteWrite"
+      ],
+      "MinimumRegionSize": 0,
+      "MaximumRegionSize": 67108864
+    },
+    {
+      "Code": 1044,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "跨进程线程起始地址落在可写可执行的映射区：与上一类似，覆盖映射段注入。",
+      "Priority": 90,
+      "Category": "Thread",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "InitiatorExclude": [
+        "*\\System32\\*",
+        "*\\SysWOW64\\*",
+        "*\\Dragon-Drivers.sys"
+      ],
+      "TargetExclude": [
+        "*\\Dragon-Drivers.sys"
+      ],
+      "ThreadMemoryTypes": [
+        "Mapped",
+        "Image"
+      ],
+      "ThreadMemoryProtections": [
+        "ExecuteWrite"
+      ],
+      "MinimumRegionSize": 0,
+      "MaximumRegionSize": 67108864
+    },
+    {
+      "Code": 1045,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "账户与凭据操控命令：改本地管理员组成员、批量改密码是横向移动的前置动作。",
+      "Priority": 85,
+      "Category": "Process",
+      "Operations": [
+        "Execute"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\net.exe",
+        "*\\net1.exe",
+        "*\\wmic.exe"
+      ],
+      "CommandLine": [
+        "*user*add*",
+        "*localgroup*",
+        "*group*add*",
+        "*accounts*"
+      ]
+    },
+    {
+      "Code": 1046,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "系统还原与备份策略键被关闭：与删除卷影副本同一目的。",
+      "Priority": 80,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore\\*",
+        "*\\Policies\\Microsoft\\Windows NT\\SystemRestore\\*",
+        "*\\WindowsBackup\\*"
+      ]
+    },
+    {
+      "Code": 1047,
+      "Kill": true,
+      "Action": "Terminate",
+      "Note": "事件日志被清除或改写：擦除痕迹是入侵收尾动作。",
+      "Priority": 80,
+      "Category": "File",
+      "Operations": [
+        "Delete",
+        "Rename"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\System32\\winevt\\Logs\\*"
+      ]
+    },
+    {
+      "Code": 1048,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "终端服务与远程访问被开放：RDP / WinRM / 远程协助被打开是持久化后门的常见形态。",
+      "Priority": 85,
+      "Category": "Registry",
+      "Operations": [
+        "Create",
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Control\\Terminal Server\\*",
+        "*\\Control\\Terminal Server\\WinStations\\*",
+        "*\\WinRM\\*",
+        "*\\Policies\\Microsoft\\Windows\\WinRM\\*"
+      ]
+    },
+    {
+      "Code": 1049,
+      "Kill": false,
+      "Action": "Report",
+      "Note": "UAC 策略被改写：把 EnableLUA 改成 0、或放开 ConsentPromptBehaviorAdmin，是提权与横向移动的标准前置动作。这里用 ValueNames 精确到具体值 —— 同一个 Policies\\System 键下还有大量无关策略，只按整键拦截会误伤组策略下发。",
+      "Priority": 90,
+      "Category": "Registry",
+      "Operations": [
+        "Write",
+        "Delete"
+      ],
+      "Initiator": [
+        "*"
+      ],
+      "Target": [
+        "*\\Policies\\System",
+        "*\\Policies\\System\\*"
+      ],
+      "ValueNames": [
+        "EnableLUA",
+        "ConsentPromptBehaviorAdmin",
+        "PromptOnSecureDesktop",
+        "FilterAdministratorToken",
+        "EnableInstallerDetection",
+        "ValidateAdminCodeSignatures",
+        "EnableVirtualization"
+      ]
+    }
+  ]
+}

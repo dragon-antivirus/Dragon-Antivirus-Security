@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# PyInstaller
+build/
+dist/
+*.manifest
+
+# 驱动编译产物
+Dragon-Drivers/x64/
+Dragon-Drivers/out/
+Dragon-Drivers/build/*
+!Dragon-Drivers/build/build_dragon.py
+*.obj
+*.pdb
+*.sys
+*.exp
+*.lib
+*.tlog
+
+# 运行期数据（用户机器生成，不入库）
+Data/
+*.log
+*.bak
+nul
+
+# IDE
+.vs/
+.idea/
+.qoder/
+.workbuddy/
+.workbuddy-ai/
+
+# 系统
+Thumbs.db
+Desktop.ini
